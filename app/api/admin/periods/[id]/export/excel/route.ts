@@ -1,0 +1,69 @@
+import { requireAdmin } from '@/lib/server-auth'
+import { prisma } from '@/lib/prisma'
+import { generateExcel } from '@/lib/export/excel'
+import { NextResponse } from 'next/server'
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  await requireAdmin()
+  const { id } = await params
+
+  const period = await prisma.period.findUnique({
+    where: { id },
+    include: {
+      template: {
+        include: {
+          fields: {
+            where: { isActive: true },
+            orderBy: { order: 'asc' },
+          },
+        },
+      },
+    },
+  })
+
+  const entries = await prisma.entry.findMany({
+    where: { periodId: id },
+    include: {
+      branch: { select: { name: true } },
+      values: true,
+    },
+    orderBy: { branch: { name: 'asc' } },
+  })
+
+  const columns = [
+    { header: 'Branch', key: 'branch', width: 20 },
+    ...period!.template.fields.map((f) => ({
+      header: f.label,
+      key: f.key,
+      width: 15,
+    })),
+    { header: 'Status', key: 'status', width: 12 },
+  ]
+
+  const data = entries.map((entry) => {
+    const row: Record<string, string | number> = {
+      branch: entry.branch.name,
+      status: entry.status,
+    }
+
+    entry.values.forEach((v) => {
+      const field = period!.template.fields.find((f) => f.id === v.templateFieldId)
+      if (field) row[field.key] = v.value
+    })
+
+    return row
+  })
+
+  const buffer = await generateExcel(columns, data, 'Summary')
+
+  return new NextResponse(new Uint8Array(buffer), {
+    headers: {
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${period!.name}-summary.xlsx"`,
+    },
+  })
+}
