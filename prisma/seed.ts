@@ -9,7 +9,7 @@ async function main() {
   // Create admin user
   await prisma.user.upsert({
     where: { email: "admin@example.com" },
-    update: {},
+    update: { username: "admin" },
     create: {
       email: "admin@example.com",
       username: "admin",
@@ -29,7 +29,7 @@ async function main() {
 
     await prisma.user.upsert({
       where: { email: `branch${i}@example.com` },
-      update: {},
+      update: { username: `branch${i}` },
       create: {
         email: `branch${i}@example.com`,
         username: `branch${i}`,
