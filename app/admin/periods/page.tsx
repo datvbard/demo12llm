@@ -1,19 +1,78 @@
-import { requireAdmin } from '@/lib/server-auth'
-import { prisma } from '@/lib/prisma'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function AdminPeriodsPage() {
-  await requireAdmin()
+interface Period {
+  id: string
+  name: string
+  status: string
+  template: { name: string }
+  _count: { entries: number }
+}
 
-  const periods = await prisma.period.findMany({
-    include: {
-      template: { select: { name: true } },
-      _count: { select: { entries: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+interface Template {
+  id: string
+  name: string
+}
 
-  const templates = await prisma.template.findMany()
+export default function AdminPeriodsPage() {
+  const router = useRouter()
+  const [periods, setPeriods] = useState<Period[]>([])
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/admin/periods').then((r) => r.json()),
+      fetch('/api/templates').then((r) => r.json()),
+    ]).then(([periodsData, templatesData]) => {
+      setPeriods(periodsData)
+      setTemplates(templatesData)
+      setLoading(false)
+    })
+  }, [])
+
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const res = await fetch('/api/admin/periods', {
+      method: 'POST',
+      body: formData,
+    })
+    if (res.ok) {
+      const newPeriod = await res.json()
+      setPeriods((prev) => [newPeriod, ...prev])
+      e.currentTarget.reset()
+    }
+  }
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete period "${name}"?`)) {
+      return
+    }
+
+    setDeleting(id)
+    try {
+      const res = await fetch(`/api/admin/periods?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setPeriods((prev) => prev.filter((p) => p.id !== id))
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete period')
+      }
+    } catch (err) {
+      alert('Failed to delete period')
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  if (loading) {
+    return <div className="p-8">Loading...</div>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -29,8 +88,7 @@ export default async function AdminPeriodsPage() {
         </div>
 
         <form
-          action="/api/admin/periods"
-          method="POST"
+          onSubmit={handleCreate}
           className="mb-6 rounded-lg bg-white p-4 shadow"
         >
           <div className="flex gap-4">
@@ -102,16 +160,23 @@ export default async function AdminPeriodsPage() {
                   <td className="px-4 py-3 text-sm">
                     <Link
                       href={`/admin/periods/${period.id}/branches`}
-                      className="text-blue-600 hover:text-blue-800 mr-4"
+                      className="text-blue-600 hover:text-blue-800 mr-2"
                     >
                       Progress
                     </Link>
                     <Link
                       href={`/admin/periods/${period.id}/summary`}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-800 mr-2"
                     >
                       Summary
                     </Link>
+                    <button
+                      onClick={() => handleDelete(period.id, period.name)}
+                      disabled={deleting === period.id}
+                      className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                    >
+                      {deleting === period.id ? 'Deleting...' : 'Delete'}
+                    </button>
                   </td>
                 </tr>
               ))}

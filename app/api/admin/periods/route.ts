@@ -54,3 +54,36 @@ export async function POST(req: Request) {
     )
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    await requireAdmin()
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Period ID is required' },
+        { status: 400 }
+      )
+    }
+
+    // Delete all entries for this period first (cascade)
+    await prisma.entry.deleteMany({
+      where: { periodId: id },
+    })
+
+    // Delete the period
+    await prisma.period.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('[DELETE /api/admin/periods]', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete period' },
+      { status: 500 }
+    )
+  }
+}

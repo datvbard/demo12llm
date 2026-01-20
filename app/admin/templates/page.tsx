@@ -1,14 +1,54 @@
-import { requireAdmin } from '@/lib/server-auth'
-import { prisma } from '@/lib/prisma'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function TemplatesPage() {
-  await requireAdmin()
+interface Template {
+  id: string
+  name: string
+  _count: { fields: number }
+}
 
-  const templates = await prisma.template.findMany({
-    include: { _count: { select: { fields: true } } },
-    orderBy: { createdAt: 'desc' },
-  })
+export default function TemplatesPage() {
+  const router = useRouter()
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/templates')
+      .then((r) => r.json())
+      .then((data) => {
+        setTemplates(data)
+        setLoading(false)
+      })
+  }, [])
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete template "${name}"?`)) {
+      return
+    }
+
+    setDeleting(id)
+    try {
+      const res = await fetch(`/api/templates?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setTemplates((prev) => prev.filter((t) => t.id !== id))
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to delete template')
+      }
+    } catch (err) {
+      alert('Failed to delete template')
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  if (loading) {
+    return <div className="p-8">Loading...</div>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -23,7 +63,22 @@ export default async function TemplatesPage() {
           </Link>
         </div>
 
-        <form action="/api/templates" method="POST" className="mb-6 rounded-lg bg-white p-4 shadow">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            const formData = new FormData(e.currentTarget)
+            const res = await fetch('/api/templates', {
+              method: 'POST',
+              body: formData,
+            })
+            if (res.ok) {
+              const newTemplate = await res.json()
+              setTemplates((prev) => [newTemplate, ...prev])
+              e.currentTarget.reset()
+            }
+          }}
+          className="mb-6 rounded-lg bg-white p-4 shadow"
+        >
           <div className="flex gap-4">
             <input
               name="name"
@@ -42,18 +97,33 @@ export default async function TemplatesPage() {
 
         <div className="space-y-2">
           {templates.map((t) => (
-            <Link
+            <div
               key={t.id}
-              href={`/admin/templates/${t.id}`}
-              className="block rounded-lg bg-white p-4 shadow hover:bg-gray-50 transition"
+              className="flex items-center justify-between rounded-lg bg-white p-4 shadow"
             >
-              <div className="flex items-center justify-between">
+              <Link
+                href={`/admin/templates/${t.id}`}
+                className="flex-1 hover:bg-gray-50 transition -m-4 p-4"
+              >
                 <span className="font-semibold text-gray-900">{t.name}</span>
-                <span className="text-sm text-gray-500">{t._count.fields} fields</span>
-              </div>
-            </Link>
+                <span className="text-sm text-gray-500 ml-4">{t._count.fields} fields</span>
+              </Link>
+              <button
+                onClick={() => handleDelete(t.id, t.name)}
+                disabled={deleting === t.id}
+                className="ml-4 rounded-md bg-red-600 px-4 py-2 text-sm text-white font-medium hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting === t.id ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           ))}
         </div>
+
+        {templates.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            No templates yet. Create your first template above.
+          </div>
+        )}
       </div>
     </div>
   )
