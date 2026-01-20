@@ -142,15 +142,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Test accounts */}
-          <div className="mt-6 rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 text-sm border border-blue-200 dark:border-blue-800">
-            <p className="font-semibold text-blue-900 dark:text-blue-200 mb-2">Tài khoản dùng thử:</p>
-            <div className="space-y-1 text-blue-800 dark:text-blue-300">
-              <p><span className="font-medium">Quản trị:</span> quantrivba / password123</p>
-              <p><span className="font-medium">Chi nhánh:</span> hoiso / password123</p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
