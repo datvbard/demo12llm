@@ -57,7 +57,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Hệ Thống Thu Thập Dữ Liệu
+            Hệ Thống Quản Lý Dữ Liệu Theo Chi Nhánh
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Đăng nhập để tiếp tục
@@ -155,7 +155,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          © 2026 Hệ Thống Thu Thập Dữ Liệu. Phiên bản 1.0
+          Phòng Khách hàng Cá nhân - Agribank Trà Vinh 2026
         </p>
       </div>
 

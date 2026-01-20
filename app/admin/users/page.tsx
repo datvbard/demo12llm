@@ -147,7 +147,7 @@ export default function AdminUsersPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Hệ Thống Thu Thập Dữ Liệu
+                  Hệ Thống Quản Lý Dữ Liệu Theo Chi Nhánh
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Quản lý người dùng

@@ -49,7 +49,7 @@ export default async function AdminPage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Hệ Thống Thu Thập Dữ Liệu
+                  Hệ Thống Quản Lý Dữ Liệu Theo Chi Nhánh
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Trang quản trị
@@ -115,7 +115,7 @@ export default async function AdminPage() {
 
       {/* Footer */}
       <footer className="mt-auto py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        <p>© 2026 Hệ Thống Thu Thập Dữ Liệu. Phiên bản 1.0</p>
+        <p>Phòng Khách hàng Cá nhân - Agribank Trà Vinh 2026</p>
       </footer>
     </div>
   )
