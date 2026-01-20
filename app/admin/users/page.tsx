@@ -110,6 +110,25 @@ export default function AdminUsersPage() {
     setSuccess(`Password reset for ${username}`)
   }
 
+  async function onDeleteUser(userId: string, username: string) {
+    if (!confirm(`Are you sure you want to delete user ${username}?`)) {
+      return
+    }
+
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+    })
+
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || 'Failed to delete user')
+      return
+    }
+
+    setSuccess(`User ${username} deleted successfully`)
+    fetchUsers()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-6xl">
@@ -227,12 +246,18 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-sm">{user.email}</td>
                     <td className="px-4 py-3 text-sm">{user.branch?.name || '-'}</td>
                     <td className="px-4 py-3 text-sm">{user.role}</td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-4 py-3 text-sm space-x-2">
                       <button
                         onClick={() => onResetPassword(user.id, user.username)}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         Reset Password
+                      </button>
+                      <button
+                        onClick={() => onDeleteUser(user.id, user.username)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
