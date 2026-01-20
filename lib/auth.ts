@@ -42,6 +42,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           username: user.username ?? undefined,
+          fullName: user.fullName ?? undefined,
+          position: user.position ?? undefined,
           role: user.role,
           branchId: user.branchId ?? undefined,
         }
@@ -56,6 +58,8 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role
         token.branchId = user.branchId
         token.username = user.username
+        token.fullName = user.fullName
+        token.position = user.position
       }
       return token
     },
@@ -65,6 +69,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as 'ADMIN' | 'BRANCH'
         session.user.branchId = token.branchId as string | undefined
         session.user.username = token.username as string | undefined
+        session.user.fullName = token.fullName as string | undefined
+        session.user.position = token.position as string | undefined
       }
       return session
     },

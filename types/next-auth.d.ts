@@ -7,6 +7,8 @@ declare module 'next-auth' {
       role: 'ADMIN' | 'BRANCH'
       branchId?: string
       username?: string
+      fullName?: string
+      position?: string
     } & DefaultSession['user']
   }
 
@@ -14,6 +16,8 @@ declare module 'next-auth' {
     role: 'ADMIN' | 'BRANCH'
     branchId?: string
     username?: string
+    fullName?: string
+    position?: string
   }
 }
 
@@ -22,5 +26,7 @@ declare module 'next-auth/jwt' {
     role: 'ADMIN' | 'BRANCH'
     branchId?: string
     username?: string
+    fullName?: string
+    position?: string
   }
 }

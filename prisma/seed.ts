@@ -3,43 +3,96 @@ import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Branch data with Vietnamese names
+const BRANCHES = [
+  "Hội sở",
+  "Quang Trung",
+  "Nam Duyên Hải",
+  "Cầu Kè",
+  "Tiểu Cần",
+  "Lê Lợi",
+  "Trà Cú",
+  "Cầu Ngang",
+  "Châu Thành",
+  "Duyên Hải",
+  "Càng Long",
+];
+
+// Branch user data: username, email, fullName, position, branchName
+const BRANCH_USERS = [
+  { username: "hoiso", email: "hoiso@example.com", fullName: "Nguyễn Văn A", position: "Quản lý", branchName: "Hội sở" },
+  { username: "quangtrung", email: "quangtrung@example.com", fullName: "Trần Văn B", position: "Nhân viên", branchName: "Quang Trung" },
+  { username: "namduyenhai", email: "namduyenhai@example.com", fullName: "Lê Văn C", position: "Nhân viên", branchName: "Nam Duyên Hải" },
+  { username: "cauke", email: "cauke@example.com", fullName: "Phạm Văn D", position: "Nhân viên", branchName: "Cầu Kè" },
+  { username: "tieucan", email: "tieucan@example.com", fullName: "Hoàng Văn E", position: "Nhân viên", branchName: "Tiểu Cần" },
+  { username: "leloi", email: "leloi@example.com", fullName: "Ngô Văn F", position: "Nhân viên", branchName: "Lê Lợi" },
+  { username: "tracu", email: "tracu@example.com", fullName: "Võ Văn G", position: "Nhân viên", branchName: "Trà Cú" },
+  { username: "caungang", email: "caungang@example.com", fullName: "Đặng Văn H", position: "Nhân viên", branchName: "Cầu Ngang" },
+  { username: "chauthanh", email: "chauthanh@example.com", fullName: "Lý Văn I", position: "Nhân viên", branchName: "Châu Thành" },
+  { username: "duyenhai", email: "duyenhai@example.com", fullName: "Phan Văn K", position: "Nhân viên", branchName: "Duyên Hải" },
+  { username: "canglong", email: "canglong@example.com", fullName: "Huỳnh Văn L", position: "Nhân viên", branchName: "Càng Long" },
+];
+
 async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // Create admin user
+  // Delete old entries
+  await prisma.entryValue.deleteMany({});
+  await prisma.entry.deleteMany({});
+  console.log("✓ Deleted old entries");
+
+  // Delete old branch users (keep admins)
+  await prisma.user.deleteMany({
+    where: { role: Role.BRANCH },
+  });
+  console.log("✓ Deleted old branch users");
+
+  // Delete old branches
+  await prisma.branch.deleteMany({});
+  console.log("✓ Deleted old branches");
+
+  // Create admin user "quantrivba"
   await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: { username: "admin" },
+    where: { email: "quantrivba@example.com" },
+    update: { username: "quantrivba", fullName: "Quản Trị VBA", position: "Admin" },
     create: {
-      email: "admin@example.com",
-      username: "admin",
+      email: "quantrivba@example.com",
+      username: "quantrivba",
       password: hashedPassword,
+      fullName: "Quản Trị VBA",
+      position: "Admin",
       role: Role.ADMIN,
     },
   });
-  console.log("✓ Admin user created: admin@example.com (username: admin) / password123");
+  console.log("✓ Admin user created: quantrivba / password123");
 
-  // Create 11 branches with branch users
-  for (let i = 1; i <= 11; i++) {
-    const branch = await prisma.branch.upsert({
-      where: { name: `Branch ${i}` },
-      update: {},
-      create: { name: `Branch ${i}` },
+  // Create branches and branch users
+  for (const branchName of BRANCHES) {
+    const branch = await prisma.branch.create({
+      data: { name: branchName },
+    });
+    console.log(`✓ Branch created: ${branchName}`);
+  }
+
+  for (const userData of BRANCH_USERS) {
+    const branch = await prisma.branch.findUnique({
+      where: { name: userData.branchName },
     });
 
-    await prisma.user.upsert({
-      where: { email: `branch${i}@example.com` },
-      update: { username: `branch${i}` },
-      create: {
-        email: `branch${i}@example.com`,
-        username: `branch${i}`,
-        password: hashedPassword,
-        role: Role.BRANCH,
-        branchId: branch.id,
-      },
-    });
-
-    console.log(`✓ Branch ${i} created: branch${i}@example.com (username: branch${i}) / password123`);
+    if (branch) {
+      await prisma.user.create({
+        data: {
+          email: userData.email,
+          username: userData.username,
+          password: hashedPassword,
+          fullName: userData.fullName,
+          position: userData.position,
+          role: Role.BRANCH,
+          branchId: branch.id,
+        },
+      });
+      console.log(`✓ User created: ${userData.username} (${userData.fullName}) - ${userData.branchName}`);
+    }
   }
 
   // Create template with fields
@@ -48,7 +101,7 @@ async function main() {
     update: {},
     create: {
       name: "Monthly Report",
-      createdBy: "admin@example.com",
+      createdBy: "quantrivba@example.com",
     },
   });
 
@@ -93,31 +146,26 @@ async function main() {
     console.log(`✓ Period already exists: ${period.name}`);
   }
 
-  // Create empty entries for all branches (only if not exist)
-  for (let i = 1; i <= 11; i++) {
-    const branch = await prisma.branch.findFirst({
-      where: { name: `Branch ${i}` },
+  // Create empty entries for all branches
+  const branches = await prisma.branch.findMany();
+  for (const branch of branches) {
+    const existingEntry = await prisma.entry.findUnique({
+      where: {
+        periodId_branchId: {
+          periodId: period.id,
+          branchId: branch.id,
+        },
+      },
     });
 
-    if (branch) {
-      const existingEntry = await prisma.entry.findUnique({
-        where: {
-          periodId_branchId: {
-            periodId: period.id,
-            branchId: branch.id,
-          },
+    if (!existingEntry) {
+      await prisma.entry.create({
+        data: {
+          periodId: period.id,
+          branchId: branch.id,
+          status: "DRAFT",
         },
       });
-
-      if (!existingEntry) {
-        await prisma.entry.create({
-          data: {
-            periodId: period.id,
-            branchId: branch.id,
-            status: "DRAFT",
-          },
-        });
-      }
     }
   }
 
@@ -125,10 +173,11 @@ async function main() {
 
   console.log("\n✓ Seed completed!");
   console.log("\nTest accounts:");
-  console.log("  Admin:     admin@example.com / password123");
-  console.log("  Branch 1:  branch1@example.com / password123");
-  console.log("  ...");
-  console.log("  Branch 11: branch11@example.com / password123");
+  console.log("  Admin:     quantrivba / password123");
+  console.log("  Branch users:");
+  for (const user of BRANCH_USERS) {
+    console.log(`    ${user.username} / password123 (${user.fullName} - ${user.branchName})`);
+  }
 }
 
 main()

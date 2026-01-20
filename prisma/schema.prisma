@@ -33,6 +33,8 @@ model User {
   email      String   @unique
   username   String?  @unique
   password   String
+  fullName   String?
+  position   String?
   role       Role
   branchId   String?
   branch     Branch?  @relation(fields: [branchId], references: [id])
