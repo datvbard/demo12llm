@@ -25,6 +25,22 @@ export default async function AdminPage() {
             <h2 className="text-xl font-semibold text-gray-900">Periods</h2>
             <p className="mt-2 text-gray-600">Manage collection periods</p>
           </Link>
+
+          <Link
+            href="/admin/users"
+            className="rounded-lg bg-white p-6 shadow hover:bg-gray-50 transition"
+          >
+            <h2 className="text-xl font-semibold text-gray-900">Users</h2>
+            <p className="mt-2 text-gray-600">Manage branch users</p>
+          </Link>
+
+          <Link
+            href="/admin/profile"
+            className="rounded-lg bg-white p-6 shadow hover:bg-gray-50 transition"
+          >
+            <h2 className="text-xl font-semibold text-gray-900">Profile</h2>
+            <p className="mt-2 text-gray-600">Change your password</p>
+          </Link>
         </div>
       </div>
     </div>

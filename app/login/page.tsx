@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError('')
 
     const result = await signIn('credentials', {
-      email,
+      identifier,
       password,
       redirect: false,
     })
@@ -27,7 +27,6 @@ export default function LoginPage() {
     if (result?.error) {
       setError('Invalid credentials')
     } else {
-      // Check user role to redirect correctly
       const response = await fetch('/api/auth/session')
       const session = await response.json()
 
@@ -59,17 +58,17 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+              <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
+                Username or Email
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="admin@example.com"
+                placeholder="admin or admin@example.com"
               />
             </div>
 
@@ -100,8 +99,8 @@ export default function LoginPage() {
 
         <div className="mt-4 rounded-md bg-blue-50 p-4 text-sm text-blue-800">
           <p className="font-medium">Test Accounts:</p>
-          <p>Admin: admin@example.com / password123</p>
-          <p>Branch: branch1@example.com / password123</p>
+          <p>Admin: admin / password123</p>
+          <p>Branch: branch1 / password123</p>
         </div>
       </div>
     </div>

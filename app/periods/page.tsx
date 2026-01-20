@@ -26,6 +26,9 @@ export default async function PeriodsPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-900">Branch Data Collection</h1>
             <div className="flex items-center gap-4">
+              <Link href="/periods/profile" className="text-sm text-blue-600 hover:text-blue-800">
+                Profile
+              </Link>
               <span className="text-sm text-gray-600">{user.email}</span>
               <SignOutButton />
             </div>

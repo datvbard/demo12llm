@@ -12,11 +12,12 @@ async function main() {
     update: {},
     create: {
       email: "admin@example.com",
+      username: "admin",
       password: hashedPassword,
       role: Role.ADMIN,
     },
   });
-  console.log("✓ Admin user created: admin@example.com / password123");
+  console.log("✓ Admin user created: admin@example.com (username: admin) / password123");
 
   // Create 11 branches with branch users
   for (let i = 1; i <= 11; i++) {
@@ -31,13 +32,14 @@ async function main() {
       update: {},
       create: {
         email: `branch${i}@example.com`,
+        username: `branch${i}`,
         password: hashedPassword,
         role: Role.BRANCH,
         branchId: branch.id,
       },
     });
 
-    console.log(`✓ Branch ${i} created: branch${i}@example.com / password123`);
+    console.log(`✓ Branch ${i} created: branch${i}@example.com (username: branch${i}) / password123`);
   }
 
   // Create template with fields

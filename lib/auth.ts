@@ -8,35 +8,40 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        identifier: { label: 'Username or Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.identifier || !credentials?.password) {
           console.log('Missing credentials')
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const identifier = credentials.identifier
+
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [{ email: identifier }, { username: identifier }],
+          },
           include: { branch: true },
         })
 
         if (!user) {
-          console.log('User not found:', credentials.email)
+          console.log('User not found:', identifier)
           return null
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password)
         if (!isValid) {
-          console.log('Invalid password for:', credentials.email)
+          console.log('Invalid password for:', identifier)
           return null
         }
 
-        console.log('Login success:', user.email, user.role)
+        console.log('Login success:', user.email, user.username, user.role)
         return {
           id: user.id,
           email: user.email,
+          username: user.username ?? undefined,
           role: user.role,
           branchId: user.branchId ?? undefined,
         }
@@ -50,6 +55,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role
         token.branchId = user.branchId
+        token.username = user.username
       }
       return token
     },
@@ -58,6 +64,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!
         session.user.role = token.role as 'ADMIN' | 'BRANCH'
         session.user.branchId = token.branchId as string | undefined
+        session.user.username = token.username as string | undefined
       }
       return session
     },

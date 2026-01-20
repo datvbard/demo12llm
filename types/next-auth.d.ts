@@ -6,12 +6,14 @@ declare module 'next-auth' {
       id: string
       role: 'ADMIN' | 'BRANCH'
       branchId?: string
+      username?: string
     } & DefaultSession['user']
   }
 
   interface User {
     role: 'ADMIN' | 'BRANCH'
     branchId?: string
+    username?: string
   }
 }
 
@@ -19,5 +21,6 @@ declare module 'next-auth/jwt' {
   interface JWT {
     role: 'ADMIN' | 'BRANCH'
     branchId?: string
+    username?: string
   }
 }
