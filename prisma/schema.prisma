@@ -1,5 +1,5 @@
-// This is your Prisma schema file
-// Phase 01: Empty schema, models added in Phase 02
+// Prisma Schema - Branch Data Collection & Approval System
+// Phase 02: Complete schema with all models
 
 generator client {
   provider = "prisma-client-js"
@@ -8,4 +8,115 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  BRANCH
+}
+
+enum EntryStatus {
+  DRAFT
+  SUBMITTED
+  LOCKED
+}
+
+enum PeriodStatus {
+  OPEN
+  LOCKED
+}
+
+// Models
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String
+  role       Role
+  branchId   String?
+  branch     Branch?  @relation(fields: [branchId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([branchId])
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  users     User[]
+  entries   Entry[]
+  createdAt DateTime @default(now())
+}
+
+model Template {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  createdBy String
+  fields    TemplateField[]
+  periods   Period[]
+  createdAt DateTime       @default(now())
+}
+
+model TemplateField {
+  id         String        @id @default(cuid())
+  templateId String
+  template   Template      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  label      String
+  key        String        // Unique key for formula references (A, B, C, etc.)
+  order      Int
+  formula    String?       // Formula expression like "A / B" or "(A - B) / B"
+  isActive   Boolean       @default(true)
+  values     EntryValue[]
+  createdAt  DateTime      @default(now())
+
+  @@unique([templateId, key])
+  @@index([templateId])
+}
+
+model Period {
+  id         String       @id @default(cuid())
+  name       String
+  templateId String
+  template   Template     @relation(fields: [templateId], references: [id])
+  status     PeriodStatus @default(OPEN)
+  entries    Entry[]
+  createdAt  DateTime     @default(now())
+
+  @@index([templateId])
+  @@index([status])
+}
+
+model Entry {
+  id           String     @id @default(cuid())
+  periodId     String
+  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  branchId     String
+  branch       Branch     @relation(fields: [branchId], references: [id])
+  status       EntryStatus @default(DRAFT)
+  submittedAt  DateTime?
+  submittedBy  String?    // User ID who submitted
+  confirmedAt  DateTime?
+  confirmedBy  String?    // User ID who confirmed
+  updatedAt    DateTime   @updatedAt
+  values       EntryValue[]
+
+  @@unique([periodId, branchId])
+  @@index([periodId])
+  @@index([branchId])
+  @@index([status])
+  @@index([submittedBy])
+  @@index([confirmedBy])
+}
+
+model EntryValue {
+  id             String        @id @default(cuid())
+  entryId        String
+  entry          Entry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  templateFieldId String
+  templateField  TemplateField @relation(fields: [templateFieldId], references: [id])
+  value          Float
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([entryId, templateFieldId])
+  @@index([entryId])
 }
