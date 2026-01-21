@@ -2,6 +2,63 @@
 
 ## [Unreleased]
 
+### Added - Phase 05: Customer Report Export Feature (2026-01-21)
+
+**Export Implementations**
+- `lib/export/excel.ts` - Excel export with ExcelJS (merged data + responses)
+- `lib/export/pdf.ts` - PDF export with jsPDF + autoTable
+- Format: title row, date row, styled headers, data rows
+- Checkbox: "Có"/"Không", Date: dd/MM/yyyy, Number: locale format
+- Empty values: "(chưa điền)"
+
+**API Routes**
+- `/api/admin/customer-reports/[id]/export/excel` - Excel download
+- `/api/admin/customer-reports/[id]/export/pdf` - PDF download
+- Content-Type headers for proper browser download
+
+### Added - Phase 04: Customer Report Branch UI (2026-01-21)
+
+**Branch Pages**
+- `/app/customer-reports/page.tsx` - List branch-assigned reports
+- `/app/customer-reports/[id]/page.tsx` - Fill responses form
+- Branch filtering: only show rows for logged-in user's branch
+- Progress tracking: filled/total rows with percentage
+
+**Components**
+- `CustomerRowCard` - Per-row response form with dynamic fields
+- `ResponseFieldInput` - Type-specific inputs (dropdown/text/number/date/checkbox)
+- `ProgressBar` - Visual progress indicator
+- `SaveStatus` - Auto-save feedback (saving/saved/error)
+- Debounced auto-save (500ms delay)
+
+**Features**
+- Filter: all/incomplete rows
+- Search: by customer name/CIF
+- Bulk save: save all button
+- Visual save status per row
+- Locked reports: read-only mode
+
+### Added - Phase 03: Customer Report Admin UI (2026-01-21)
+
+**Admin Pages**
+- `/app/admin/report-templates/page.tsx` - Template list + create
+- `/app/admin/report-templates/[id]/page.tsx` - Edit template + manage fields
+- `/app/admin/customer-reports/page.tsx` - Report list + upload
+- `/app/admin/customer-reports/[id]/page.tsx` - View rows + export
+
+**Components**
+- `TemplateForm` - Create/edit templates
+- `FieldEditor` - Add/edit response fields
+- `ReportUpload` - Excel file upload with validation
+- `CustomerReportTable` - View all rows with responses
+
+**Features**
+- Dynamic field types: dropdown, text, number, date, checkbox
+- Field reordering with drag-drop (up/down buttons)
+- Excel preview before upload
+- Response statistics (filled/total)
+- Export buttons (Excel, PDF)
+
 ### Added - Phase 02: Customer Report API Routes (2026-01-21)
 
 **Admin API Routes**
