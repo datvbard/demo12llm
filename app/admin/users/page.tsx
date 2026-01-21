@@ -46,7 +46,7 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/users')
       if (res.ok) {
         const data = await res.json()
-        setUsers(data)
+        setUsers(data.data || data)
       }
     } catch (err) {
       console.error('[fetchUsers]', getErrorMessage(err))
@@ -60,7 +60,7 @@ export default function AdminUsersPage() {
       const res = await fetch('/api/admin/branches')
       if (res.ok) {
         const data = await res.json()
-        setBranches(data)
+        setBranches(data.data || data)
       }
     } catch (err) {
       console.error('[fetchBranches]', getErrorMessage(err))

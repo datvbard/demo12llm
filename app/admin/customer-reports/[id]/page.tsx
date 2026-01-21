@@ -79,7 +79,7 @@ export default function CustomerReportDetailPage() {
     try {
       const res = await fetch('/api/admin/branches')
       const data = await res.json()
-      setBranches(data.branches || [])
+      setBranches(data.data || data)
     } catch (err) {
       console.error('[fetchBranches]', getErrorMessage(err))
     }

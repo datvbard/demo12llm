@@ -443,6 +443,180 @@ import { withErrorBoundary } from '@/components/error-boundary'
 export default withErrorBoundary(MyComponent)
 ```
 
+## Performance Optimization Standards (Phase 08)
+
+### Application Constants (`lib/constants.ts`)
+
+**Purpose**: Centralize all magic numbers for better maintainability.
+
+**Usage**:
+```typescript
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, DEBOUNCE_DELAY_MS } from '@/lib/constants'
+
+// Pagination
+const limit = Math.min(MAX_PAGE_SIZE, parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE)))
+
+// Debounce
+const debouncedSearch = useDebounce(searchQuery, DEBOUNCE_DELAY_MS)
+```
+
+**Available Constants**:
+```typescript
+// UI/UX
+DEBOUNCE_DELAY_MS = 500        // Auto-save/search debounce
+SAVE_STATUS_RESET_MS = 2000    // Save status indicator reset
+MAX_DISPLAY_FIELDS = 3         // Summary card field limit
+
+// Validation
+MIN_PASSWORD_LENGTH = 8
+MIN_USERNAME_LENGTH = 3
+MAX_USERNAME_LENGTH = 30
+MAX_EXCEL_FILE_SIZE_MB = 10
+
+// Pagination
+DEFAULT_PAGE_SIZE = 20
+MAX_PAGE_SIZE = 100
+
+// Rate limiting
+RATE_LIMIT_REQUESTS = 100
+RATE_LIMIT_WINDOW_MS = 60000
+
+// Cache TTL (for future use)
+CACHE_TTL_SECONDS = 300
+LONG_CACHE_TTL_SECONDS = 3600
+```
+
+### React.cache() Query Pattern (`lib/queries.ts`)
+
+**Purpose**: Automatic request deduplication during React rendering.
+
+**Usage**:
+```typescript
+import { getTemplates, getTemplateById } from '@/lib/queries'
+
+// In Server Components or Server Actions
+const templates = await getTemplates()  // Deduplicated if called multiple times
+const template = await getTemplateById(id)
+```
+
+**When to Use**:
+- Server Components fetching data
+- Server Actions reading from database
+- Any query that might be called multiple times in single render
+
+**Available Cached Queries**:
+- `getTemplates()` - All templates with fields
+- `getTemplateById(id)` - Single template with fields
+- `getPeriods()` - All periods with template + entry counts
+- `getPeriodById(id)` - Single period with full details
+- `getBranches()` - All branches
+- `getUsers()` - All users with branch info
+- `getCustomerReportById(id)` - Report with rows + responses
+
+### Pagination Pattern (`lib/user-utils.ts`)
+
+**Type Definitions**:
+```typescript
+interface PaginationParams {
+  page?: number
+  limit?: number
+}
+
+interface PaginatedResponse<T> {
+  data: T[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+```
+
+**API Route Implementation**:
+```typescript
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/lib/constants'
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+  const limit = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10))
+  )
+  const skip = (page - 1) * limit
+
+  const [data, total] = await Promise.all([
+    prisma.model.findMany({ skip, take: limit }),
+    prisma.model.count()
+  ])
+
+  return NextResponse.json({
+    data,
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+  })
+}
+```
+
+**Client-Side Usage**:
+```typescript
+const response = await fetch(`/api/admin/users?page=1&limit=20`)
+const { data, pagination } = await response.json()
+```
+
+### Component Memoization
+
+**useMemo for Expensive Computations**:
+```typescript
+// Filter and search operations
+const filteredRows = useMemo(() => {
+  return rows.filter(row => {
+    const matchesFilter = filter === 'all' || (filter === 'incomplete' && !isComplete(row))
+    const matchesSearch = searchQuery === '' ||
+      row.customerName.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesFilter && matchesSearch
+  })
+}, [rows, filter, searchQuery])
+```
+
+**useCallback for Event Handlers**:
+```typescript
+const saveRow = useCallback(async (rowId: string) => {
+  // Save logic
+}, [values, report])  // Dependencies
+```
+
+**When to Memoize**:
+- Expensive computations (filtering large lists, complex transformations)
+- Functions passed to child components as props
+- Values used in dependency arrays
+- NOT for simple operations (primitives, shallow object access)
+
+### Performance Best Practices
+
+1. **Use React.cache() for all database queries in Server Components**
+   - Prevents duplicate queries in single render
+   - No extra code needed, just wrap query function
+
+2. **Implement pagination for all list endpoints**
+   - Default: 20 items
+   - Maximum: 100 items
+   - Always return metadata with total count
+
+3. **Centralize constants in `lib/constants.ts`**
+   - No magic numbers in code
+   - Single source of truth for configuration
+
+4. **Memoize expensive computations**
+   - Filter operations on large arrays
+   - Complex data transformations
+   - Derived state calculations
+
+5. **Avoid premature optimization**
+   - Measure before optimizing
+   - Focus on user-facing performance
+   - Keep code simple and readable
+
 ## Accessibility Standards (Phase 06)
 
 ### ARIA Labels & Attributes

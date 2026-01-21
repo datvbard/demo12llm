@@ -32,6 +32,8 @@ branch-data-approval-system/
 ├── lib/                  # Utility libraries
 │   ├── prisma.ts         # Prisma client singleton
 │   ├── utils.ts          # cn() helper for Tailwind
+│   ├── constants.ts      # App-wide constants (pagination, rate limit, etc.)
+│   ├── queries.ts        # React.cache() wrapped queries
 │   ├── auth.ts           # NextAuth configuration
 │   ├── rate-limit.ts     # Rate limiting utility
 │   ├── server-auth.ts    # requireAdmin(), requireBranch()
@@ -46,7 +48,45 @@ branch-data-approval-system/
 
 ## Key Architectural Patterns
 
-### 1. Error Handling & Type Safety (Phase 05)
+### 1. Performance Optimization (Phase 08)
+
+**Application Constants** (`lib/constants.ts`):
+- Centralized configuration for magic numbers
+- UI/UX: debounce delays, display limits, save reset timing
+- Validation: password/username lengths, file size limits
+- Pagination: page sizes (default 20, max 100)
+- Rate limiting: requests per minute, window duration
+- Cache TTLs for future caching implementation
+
+**React.cache() Query Utilities** (`lib/queries.ts`):
+- Automatic request deduplication during React rendering
+- Cached queries for all major entities (templates, periods, branches, users, customer reports)
+- Prevents duplicate database queries when same data requested multiple times in single render
+- Examples: `getTemplates()`, `getTemplateById()`, `getPeriods()`, `getBranches()`, `getUsers()`
+
+**Pagination Pattern** (`lib/user-utils.ts`):
+- Type-safe pagination: `PaginationParams`, `PaginatedResponse<T>`
+- Safe parameter parsing with bounds checking (page >= 1, limit between 1-100)
+- Consistent response format with metadata
+
+```typescript
+// Usage
+const { data, pagination } = await getBranchUsers({ page: 1, limit: 20 })
+// Response: { data: [...], pagination: { page: 1, limit: 20, total: 50, pages: 3 } }
+```
+
+**Component Memoization**:
+- `useMemo` for expensive computations (filtered lists, derived state)
+- `useCallback` for event handlers passed to child components
+- Prevents unnecessary re-renders and recomputations
+
+**Performance Benefits**:
+- Reduced database load via request deduplication
+- Smaller API payloads with pagination
+- Faster UI updates with memoization
+- Better maintainability with centralized constants
+
+### 2. Error Handling & Type Safety (Phase 05)
 
 **Centralized Error Handler** (`lib/api-error-handler.ts`):
 - Standardized error codes across all API routes
@@ -81,7 +121,7 @@ branch-data-approval-system/
 - Atomic upsert with timestamp update
 - Prevents concurrent update conflicts
 
-### 2. UI/UX & Accessibility (Phase 06)
+### 3. UI/UX & Accessibility (Phase 06)
 
 **Loading State Component** (`components/ui/loading-state.tsx`):
 - `LoadingState` - Full-page loading with spinner and message
@@ -118,7 +158,7 @@ branch-data-approval-system/
 - Password strength labels: "Rất yếu", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"
 - Loading/error messages: "Đang tải...", "Thử lại", etc.
 
-### 3. Security Layers
+### 4. Security Layers
 
 **Rate Limiting** (`middleware.ts`, `lib/rate-limit.ts`):
 - In-memory rate limiting: 100 requests/minute per IP
@@ -143,19 +183,19 @@ branch-data-approval-system/
 - Detailed server-side logging for debugging
 - Prisma error type detection
 
-### 3. Singleton Prisma Client
+### 5. Singleton Prisma Client
 
 `lib/prisma.ts` exports a singleton PrismaClient instance to prevent multiple connections in development.
 
-### 4. Server Actions
+### 6. Server Actions
 
 Enabled in `next.config.ts` with `allowedOrigins` for localhost and Vercel deployments.
 
-### 5. Path Aliases
+### 7. Path Aliases
 
 `@/*` maps to project root for clean imports.
 
-### 6. CSS Variables
+### 8. CSS Variables
 
 shadcn/ui theme system using HSL color variables in `app/globals.css`.
 

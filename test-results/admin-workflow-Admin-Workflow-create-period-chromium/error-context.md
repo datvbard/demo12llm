@@ -35,22 +35,22 @@
                 - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e38] [cursor=pointer]:
                   - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
                   - img [ref=e39]
-            - paragraph [ref=e48]: periods.map is not a function
+            - paragraph [ref=e48]: templates.map is not a function
           - generic [ref=e49]:
             - generic [ref=e50]:
               - paragraph [ref=e52]:
                 - img [ref=e54]
-                - generic [ref=e57]: app/admin/periods/page.tsx (146:24) @ AdminPeriodsPage
+                - generic [ref=e57]: app/admin/periods/page.tsx (103:26) @ AdminPeriodsPage
                 - button "Open in editor" [ref=e58] [cursor=pointer]:
                   - img [ref=e60]
               - generic [ref=e63]:
-                - generic [ref=e64]: 144 | </thead>
-                - generic [ref=e65]: 145 | <tbody className="divide-y divide-gray-200">
-                - generic [ref=e66]: "> 146 | {periods.map((period) => ("
+                - generic [ref=e64]: 101 | >
+                - generic [ref=e65]: 102 | <option value="">Select Template</option>
+                - generic [ref=e66]: "> 103 | {templates.map((t) => ("
                 - generic [ref=e67]: "| ^"
-                - generic [ref=e68]: "147 | <tr key={period.id}>"
-                - generic [ref=e69]: "148 | <td className=\"px-4 py-3 text-sm font-medium\">{period.name}</td>"
-                - generic [ref=e70]: "149 | <td className=\"px-4 py-3 text-sm\">{period.template?.name || '-'}</td>"
+                - generic [ref=e68]: "104 | <option key={t.id} value={t.id}>"
+                - generic [ref=e69]: "105 | {t.name}"
+                - generic [ref=e70]: 106 | </option>
             - generic [ref=e71]:
               - generic [ref=e72]:
                 - paragraph [ref=e73]:
@@ -64,7 +64,7 @@
                   - text: AdminPeriodsPage
                   - button "Open AdminPeriodsPage in editor" [ref=e80] [cursor=pointer]:
                     - img [ref=e81]
-                - text: app/admin/periods/page.tsx (146:24)
+                - text: app/admin/periods/page.tsx (103:26)
         - generic [ref=e83]:
           - generic [ref=e84]: "1"
           - generic [ref=e85]: "2"
