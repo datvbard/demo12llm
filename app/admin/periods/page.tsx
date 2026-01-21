@@ -30,7 +30,7 @@ export default function AdminPeriodsPage() {
       fetch('/api/admin/periods').then((r) => r.json()),
       fetch('/api/templates').then((r) => r.json()),
     ]).then(([periodsData, templatesData]) => {
-      setPeriods(periodsData)
+      setPeriods(periodsData.data || periodsData)
       setTemplates(templatesData)
       setLoading(false)
     })

@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/server-auth'
 import { getBranchUsers, createUser, isUsernameAvailable, isEmailAvailable, getBranches } from '@/lib/user-utils'
 import { Role } from '@prisma/client'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/lib/constants'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,8 +16,7 @@ export async function GET(req: NextRequest) {
     const users = await getBranchUsers({ page, limit })
     return NextResponse.json(users)
   } catch (error) {
-    console.error('Get users error:', error)
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return handleApiError(error, 'GET /api/admin/users', 'Failed to get users')
   }
 }
 
@@ -47,10 +47,6 @@ export async function POST(req: NextRequest) {
     const user = await createUser({ email, username, password, branchId })
     return NextResponse.json(user, { status: 201 })
   } catch (error) {
-    console.error('Create user error:', error)
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return handleApiError(error, 'POST /api/admin/users', 'Failed to create user')
   }
 }
