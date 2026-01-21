@@ -128,6 +128,74 @@ async function main() {
 
   console.log(`✓ Template created: ${template.name} with ${fields.length} fields`);
 
+  // Create TEST template with parent-child fields (for sub-field feature demo)
+  const testTemplate = await prisma.template.upsert({
+    where: { name: "TEST - Dư Nợ (Sub Fields Demo)" },
+    update: {},
+    create: {
+      name: "TEST - Dư Nợ (Sub Fields Demo)",
+      createdBy: "quantrivba@example.com",
+    },
+  });
+
+  // Clear existing fields for test template
+  await prisma.templateField.deleteMany({
+    where: { templateId: testTemplate.id },
+  });
+
+  // Create parent-child structure for demo
+  // Parent: Dư nợ (key = null, container only)
+  const parent1 = await prisma.templateField.create({
+    data: {
+      templateId: testTemplate.id,
+      label: "Dư nợ",
+      key: null, // Parent has no key (container only)
+      order: 1,
+      formula: null,
+    },
+  });
+
+  // Children of Dư nợ
+  await prisma.templateField.createMany({
+    data: [
+      { templateId: testTemplate.id, parentId: parent1.id, label: "Số khách hàng", key: "A", order: 1 },
+      { templateId: testTemplate.id, parentId: parent1.id, label: "Số tiền (triệu VNĐ)", key: "B", order: 2 },
+      { templateId: testTemplate.id, parentId: parent1.id, label: "Số tài sản bảo đảm", key: "C", order: 3 },
+    ],
+  });
+
+  // Parent: Nợ xấu
+  const parent2 = await prisma.templateField.create({
+    data: {
+      templateId: testTemplate.id,
+      label: "Nợ xấu",
+      key: null, // Parent has no key
+      order: 2,
+      formula: null,
+    },
+  });
+
+  // Children of Nợ xấu
+  await prisma.templateField.createMany({
+    data: [
+      { templateId: testTemplate.id, parentId: parent2.id, label: "Số lượng khoản", key: "D", order: 4 },
+      { templateId: testTemplate.id, parentId: parent2.id, label: "Số tiền (triệu VNĐ)", key: "E", order: 5 },
+      { templateId: testTemplate.id, parentId: parent2.id, label: "Tỷ lệ %", key: "F", order: 6, formula: "E / B * 100" },
+    ],
+  });
+
+  // Regular field (no parent)
+  await prisma.templateField.create({
+    data: {
+      templateId: testTemplate.id,
+      label: "Tổng doanh thu",
+      key: "G",
+      order: 7,
+    },
+  });
+
+  console.log(`✓ Test template created: ${testTemplate.name} with parent-child fields`);
+
   // Check if period exists, if not create
   let period = await prisma.period.findFirst({
     where: { name: "January 2025" },
@@ -144,6 +212,24 @@ async function main() {
     console.log(`✓ Period created: ${period.name}`);
   } else {
     console.log(`✓ Period already exists: ${period.name}`);
+  }
+
+  // Create test period for test template
+  let testPeriod = await prisma.period.findFirst({
+    where: { name: "TEST - Tháng 1/2026" },
+  });
+
+  if (!testPeriod) {
+    testPeriod = await prisma.period.create({
+      data: {
+        name: "TEST - Tháng 1/2026",
+        templateId: testTemplate.id,
+        status: "OPEN",
+      },
+    });
+    console.log(`✓ Test period created: ${testPeriod.name}`);
+  } else {
+    console.log(`✓ Test period already exists: ${testPeriod.name}`);
   }
 
   // Create empty entries for all branches
@@ -167,9 +253,29 @@ async function main() {
         },
       });
     }
+
+    // Also create entries for test period
+    const existingTestEntry = await prisma.entry.findUnique({
+      where: {
+        periodId_branchId: {
+          periodId: testPeriod.id,
+          branchId: branch.id,
+        },
+      },
+    });
+
+    if (!existingTestEntry) {
+      await prisma.entry.create({
+        data: {
+          periodId: testPeriod.id,
+          branchId: branch.id,
+          status: "DRAFT",
+        },
+      });
+    }
   }
 
-  console.log(`✓ Created empty entries for all branches`);
+  console.log(`✓ Created empty entries for all branches (including test period)`);
 
   console.log("\n✓ Seed completed!");
   console.log("\nTest accounts:");

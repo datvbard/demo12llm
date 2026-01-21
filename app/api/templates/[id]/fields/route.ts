@@ -10,6 +10,12 @@ export async function GET(
   const { id } = await params
   const fields = await prisma.templateField.findMany({
     where: { templateId: id },
+    include: {
+      parent: true,
+      children: {
+        orderBy: { order: 'asc' },
+      },
+    },
     orderBy: { order: 'asc' },
   })
   return NextResponse.json(fields)
@@ -20,11 +26,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const user = await requireAdmin()
-  const { label, key, formula } = await req.json()
+  const { label, key, formula, parentId } = await req.json()
   const { id } = await params
 
-  if (!label || !key) {
-    return NextResponse.json({ error: 'Label and key are required' }, { status: 400 })
+  if (!label) {
+    return NextResponse.json({ error: 'Label is required' }, { status: 400 })
+  }
+
+  // If parentId is provided, this is a child field - key is required
+  // If parentId is null, this is a parent field (section) - key can be null
+  if (parentId && !key) {
+    return NextResponse.json({ error: 'Key is required for child fields' }, { status: 400 })
   }
 
   const max = await prisma.templateField.findFirst({
@@ -36,8 +48,9 @@ export async function POST(
     data: {
       templateId: id,
       label,
-      key: key.toLowerCase(),
+      key: key ? key.toLowerCase() : null,
       formula: formula || null,
+      parentId: parentId || null,
       order: (max?.order ?? -1) + 1,
     },
   })
@@ -74,6 +87,18 @@ export async function DELETE(
 
   if (!fieldId) {
     return NextResponse.json({ error: 'fieldId is required' }, { status: 400 })
+  }
+
+  // Check if field has children
+  const childCount = await prisma.templateField.count({
+    where: { parentId: fieldId },
+  })
+
+  if (childCount > 0) {
+    return NextResponse.json(
+      { error: 'Cannot delete field with child fields. Delete children first.' },
+      { status: 400 }
+    )
   }
 
   await prisma.templateField.delete({

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { evaluateFormula } from '@/lib/formula-parser'
 import { signOut } from 'next-auth/react'
@@ -8,9 +8,11 @@ import { signOut } from 'next-auth/react'
 interface Field {
   id: string
   label: string
-  key: string
+  key: string | null
   order: number
   formula?: string | null
+  parentId: string | null
+  children?: Field[]
 }
 
 interface EntryValue {
@@ -110,7 +112,7 @@ export default function FillPeriodPage() {
       try {
         const keyToValue: Record<string, number> = {}
         fields.forEach((f) => {
-          keyToValue[f.key] = values[f.id] ?? 0
+          if (f.key) keyToValue[f.key] = values[f.id] ?? 0
         })
         return evaluateFormula(field.formula, keyToValue)
       } catch {
@@ -119,6 +121,21 @@ export default function FillPeriodPage() {
     }
     return values[field.id] ?? 0
   }
+
+  // Separate parent and child fields for display
+  const parentFields = fields.filter(f => f.parentId === null)
+  const childFields = fields.filter(f => f.parentId !== null)
+
+  // Group children by parent
+  const childrenByParent: Record<string, Field[]> = {}
+  childFields.forEach(child => {
+    if (child.parentId) {
+      if (!childrenByParent[child.parentId]) {
+        childrenByParent[child.parentId] = []
+      }
+      childrenByParent[child.parentId].push(child)
+    }
+  })
 
   async function handleStartEntry() {
     try {
@@ -244,10 +261,50 @@ export default function FillPeriodPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {fields.map((field) => {
+              {parentFields.map((field) => {
+                const isParent = field.key === null
+                const children = childrenByParent[field.id] || []
+
+                if (isParent) {
+                  // Parent field - render as section header with children
+                  return (
+                    <React.Fragment key={field.id}>
+                      <tr className="bg-blue-50">
+                        <td className="px-4 py-3 text-sm font-bold text-blue-900" colSpan={3}>
+                          {field.label}
+                        </td>
+                      </tr>
+                      {children.map((child) => {
+                        const isFormula = !!child.formula
+                        const displayValue = calculateField(child)
+                        return (
+                          <tr key={child.id} className="bg-gray-50">
+                            <td className="px-4 py-3 text-sm pl-8">{child.order + 1}</td>
+                            <td className="px-4 py-3 text-sm font-medium">{child.label}</td>
+                            <td className="px-4 py-3 text-sm">
+                              {isFormula ? (
+                                <span className="text-gray-500">{displayValue}</span>
+                              ) : (
+                                <input
+                                  type="number"
+                                  step="any"
+                                  value={values[child.id] ?? ''}
+                                  onChange={(e) => handleChange(child.id, e.target.value)}
+                                  disabled={status !== 'DRAFT'}
+                                  className="w-32 rounded-md border border-gray-300 px-2 py-1 focus:border-blue-500 focus:outline-none focus:ring-blue-500 disabled:bg-gray-100"
+                                />
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </React.Fragment>
+                  )
+                }
+
+                // Regular field (no parent, has key)
                 const isFormula = !!field.formula
                 const displayValue = calculateField(field)
-
                 return (
                   <tr key={field.id}>
                     <td className="px-4 py-3 text-sm">{field.order + 1}</td>

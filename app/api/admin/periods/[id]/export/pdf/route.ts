@@ -33,9 +33,12 @@ export async function GET(
     orderBy: { branch: { name: 'asc' } },
   })
 
+  // Filter only child fields (with key) for export - parent fields are sections
+  const exportableFields = period!.template.fields.filter((f) => f.key !== null)
+
   const columns = [
     { header: 'Branch', dataKey: 'branch' },
-    ...period!.template.fields.map((f) => ({ header: f.label, dataKey: f.key })),
+    ...exportableFields.map((f) => ({ header: f.label, dataKey: f.key! })),
     { header: 'Status', dataKey: 'status' },
   ]
 
@@ -47,7 +50,7 @@ export async function GET(
 
     entry.values.forEach((v) => {
       const field = period!.template.fields.find((f) => f.id === v.templateFieldId)
-      if (field) row[field.key] = v.value.toFixed(2)
+      if (field && field.key) row[field.key] = v.value.toFixed(2)
     })
 
     return row

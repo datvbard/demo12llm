@@ -61,19 +61,25 @@ model Template {
 }
 
 model TemplateField {
-  id         String        @id @default(cuid())
+  id         String         @id @default(cuid())
   templateId String
-  template   Template      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  template   Template       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parentId   String?        // Null = parent field (section), value = child field
+  parent     TemplateField? @relation("SubFields", fields: [parentId], references: [id])
+  children   TemplateField[] @relation("SubFields")
   label      String
-  key        String        // Unique key for formula references (A, B, C, etc.)
+  key        String?        // Unique key for formula references (A, B, C, etc.) - NULL for parent (section only)
   order      Int
-  formula    String?       // Formula expression like "A / B" or "(A - B) / B"
-  isActive   Boolean       @default(true)
+  formula    String?        // Formula expression like "A / B" or "(A - B) / B" - NULL for parent
+  isActive   Boolean        @default(true)
   values     EntryValue[]
-  createdAt  DateTime      @default(now())
+  createdAt  DateTime       @default(now())
 
+  // Unique constraint only when key is not null (child fields)
   @@unique([templateId, key])
   @@index([templateId])
+  @@index([parentId])
+  @@index([key])
 }
 
 model Period {

@@ -45,12 +45,15 @@ export async function GET(
     { header: 'Formula', key: 'formula', width: 25 },
   ]
 
-  const data = period!.template.fields.map((field) => {
+  // Filter only child fields (with key) for export - parent fields are sections
+  const exportableFields = period!.template.fields.filter((f) => f.key !== null)
+
+  const data = exportableFields.map((field) => {
     const value = entry?.values.find((v) => v.templateFieldId === field.id)
     return {
       order: field.order + 1,
       label: field.label,
-      key: field.key,
+      key: field.key!,
       value: value?.value ?? 0,
       formula: field.formula ?? '',
     }
