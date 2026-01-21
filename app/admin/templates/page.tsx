@@ -74,7 +74,7 @@ export default function TemplatesPage() {
             if (res.ok) {
               const newTemplate = await res.json()
               setTemplates((prev) => [newTemplate, ...prev])
-              e.currentTarget.reset()
+              e.currentTarget?.reset()
             }
           }}
           className="mb-6 rounded-lg bg-white p-4 shadow"
@@ -106,7 +106,7 @@ export default function TemplatesPage() {
                 className="flex-1 hover:bg-gray-50 transition -m-4 p-4"
               >
                 <span className="font-semibold text-gray-900">{t.name}</span>
-                <span className="text-sm text-gray-500 ml-4">{t._count.fields} fields</span>
+                <span className="text-sm text-gray-500 ml-4">{t._count?.fields ?? 0} fields</span>
               </Link>
               <button
                 onClick={() => handleDelete(t.id, t.name)}

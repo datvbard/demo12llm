@@ -45,7 +45,7 @@ export default function AdminPeriodsPage() {
     if (res.ok) {
       const newPeriod = await res.json()
       setPeriods((prev) => [newPeriod, ...prev])
-      e.currentTarget.reset()
+      e.currentTarget?.reset()
     }
   }
 
@@ -144,7 +144,7 @@ export default function AdminPeriodsPage() {
               {periods.map((period) => (
                 <tr key={period.id}>
                   <td className="px-4 py-3 text-sm font-medium">{period.name}</td>
-                  <td className="px-4 py-3 text-sm">{period.template.name}</td>
+                  <td className="px-4 py-3 text-sm">{period.template?.name || '-'}</td>
                   <td className="px-4 py-3 text-sm">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
@@ -156,7 +156,7 @@ export default function AdminPeriodsPage() {
                       {period.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm">{period._count.entries}</td>
+                  <td className="px-4 py-3 text-sm">{period._count?.entries ?? 0}</td>
                   <td className="px-4 py-3 text-sm">
                     <Link
                       href={`/admin/periods/${period.id}/branches`}
