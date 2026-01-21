@@ -27,53 +27,67 @@ enum PeriodStatus {
   LOCKED
 }
 
+enum ResponseFieldType {
+  DROPDOWN
+  TEXT
+  NUMBER
+  DATE
+  CHECKBOX
+}
+
+enum CustomerReportStatus {
+  OPEN
+  LOCKED
+}
+
 // Models
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  username   String?  @unique
-  password   String
-  fullName   String?
-  position   String?
-  role       Role
-  branchId   String?
-  branch     Branch?  @relation(fields: [branchId], references: [id])
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String?  @unique
+  password  String
+  fullName  String?
+  position  String?
+  role      Role
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
 
   @@index([branchId])
 }
 
 model Branch {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id        String        @id @default(cuid())
+  name      String        @unique
   users     User[]
   entries   Entry[]
-  createdAt DateTime @default(now())
+  rows      CustomerRow[]
+  createdAt DateTime      @default(now())
 }
 
 model Template {
-  id        String         @id @default(cuid())
-  name      String         @unique
+  id        String          @id @default(cuid())
+  name      String          @unique
   createdBy String
   fields    TemplateField[]
   periods   Period[]
-  createdAt DateTime       @default(now())
+  createdAt DateTime        @default(now())
 }
 
 model TemplateField {
-  id         String         @id @default(cuid())
+  id         String          @id @default(cuid())
   templateId String
-  template   Template       @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  parentId   String?        // Null = parent field (section), value = child field
-  parent     TemplateField? @relation("SubFields", fields: [parentId], references: [id])
+  template   Template        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parentId   String? // Null = parent field (section), value = child field
+  parent     TemplateField?  @relation("SubFields", fields: [parentId], references: [id])
   children   TemplateField[] @relation("SubFields")
   label      String
-  key        String?        // Unique key for formula references (A, B, C, etc.) - NULL for parent (section only)
+  key        String? // Unique key for formula references (A, B, C, etc.) - NULL for parent (section only)
   order      Int
-  formula    String?        // Formula expression like "A / B" or "(A - B) / B" - NULL for parent
-  isActive   Boolean        @default(true)
+  formula    String? // Formula expression like "A / B" or "(A - B) / B" - NULL for parent
+  isActive   Boolean         @default(true)
   values     EntryValue[]
-  createdAt  DateTime       @default(now())
+  createdAt  DateTime        @default(now())
 
   // Unique constraint only when key is not null (child fields)
   @@unique([templateId, key])
@@ -96,18 +110,18 @@ model Period {
 }
 
 model Entry {
-  id           String     @id @default(cuid())
-  periodId     String
-  period       Period     @relation(fields: [periodId], references: [id], onDelete: Cascade)
-  branchId     String
-  branch       Branch     @relation(fields: [branchId], references: [id])
-  status       EntryStatus @default(DRAFT)
-  submittedAt  DateTime?
-  submittedBy  String?    // User ID who submitted
-  confirmedAt  DateTime?
-  confirmedBy  String?    // User ID who confirmed
-  updatedAt    DateTime   @updatedAt
-  values       EntryValue[]
+  id          String       @id @default(cuid())
+  periodId    String
+  period      Period       @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  branchId    String
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  status      EntryStatus  @default(DRAFT)
+  submittedAt DateTime?
+  submittedBy String? // User ID who submitted
+  confirmedAt DateTime?
+  confirmedBy String? // User ID who confirmed
+  updatedAt   DateTime     @updatedAt
+  values      EntryValue[]
 
   @@unique([periodId, branchId])
   @@index([periodId])
@@ -118,14 +132,89 @@ model Entry {
 }
 
 model EntryValue {
-  id             String        @id @default(cuid())
-  entryId        String
-  entry          Entry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  id              String        @id @default(cuid())
+  entryId         String
+  entry           Entry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
   templateFieldId String
-  templateField  TemplateField @relation(fields: [templateFieldId], references: [id])
-  value          Float
-  updatedAt      DateTime      @updatedAt
+  templateField   TemplateField @relation(fields: [templateFieldId], references: [id])
+  value           Float
+  updatedAt       DateTime      @updatedAt
 
   @@unique([entryId, templateFieldId])
   @@index([entryId])
+}
+
+// Customer Report Models
+model ReportTemplate {
+  id          String                @id @default(cuid())
+  name        String                @unique
+  description String?
+  fields      ReportResponseField[]
+  reports     CustomerReport[]
+  createdBy   String
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+model ReportResponseField {
+  id         String            @id @default(cuid())
+  templateId String
+  template   ReportTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  label      String
+  key        String
+  type       ResponseFieldType
+  options    Json?
+  required   Boolean           @default(false)
+  order      Int
+  isActive   Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+
+  @@unique([templateId, key])
+  @@index([templateId])
+}
+
+model CustomerReport {
+  id           String               @id @default(cuid())
+  name         String
+  templateId   String
+  template     ReportTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  status       CustomerReportStatus @default(OPEN)
+  branchColumn String
+  columns      Json
+  uploadedBy   String
+  createdAt    DateTime             @default(now())
+  rows         CustomerRow[]
+
+  @@index([templateId])
+  @@index([status])
+}
+
+model CustomerRow {
+  id           String                @id @default(cuid())
+  reportId     String
+  report       CustomerReport        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  branchId     String?
+  branch       Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  rowIndex     Int
+  customerData Json
+  responses    CustomerRowResponse[]
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@unique([reportId, rowIndex])
+  @@index([reportId])
+  @@index([branchId])
+}
+
+model CustomerRowResponse {
+  id        String      @id @default(cuid())
+  rowId     String
+  row       CustomerRow @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  fieldKey  String
+  value     Json
+  updatedBy String
+  updatedAt DateTime    @updatedAt
+
+  @@unique([rowId, fieldKey])
+  @@index([rowId])
 }
