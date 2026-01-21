@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface Field {
   id: string
@@ -62,8 +63,9 @@ export default function TemplateDetailPage() {
 
       const updated = await fetch(`/api/templates/${params.id}/fields`)
       setFields(await updated.json())
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[addField]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

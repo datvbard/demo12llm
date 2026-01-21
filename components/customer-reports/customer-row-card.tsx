@@ -3,13 +3,13 @@
 import React from 'react'
 import { ResponseFieldInput } from './response-field-input'
 import { SaveStatusIndicator, SaveStatus } from './save-status-indicator'
-import type { ReportResponseField, CustomerRow } from '@/types/customer-report'
+import type { ReportResponseField, CustomerRow, FieldValue } from '@/types/customer-report'
 
 interface CustomerRowCardProps {
   row: CustomerRow
   fields: ReportResponseField[]
-  values: Record<string, any>
-  onChange: (fieldKey: string, value: any) => void
+  values: Record<string, FieldValue | null>
+  onChange: (fieldKey: string, value: FieldValue | null) => void
   saveStatus: SaveStatus
   saveError?: string
   disabled?: boolean

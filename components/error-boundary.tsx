@@ -40,9 +40,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="flex min-h-[400px] items-center justify-center p-8">
+          <div className="flex min-h-[400px] items-center justify-center p-8" role="alert" aria-live="assertive">
             <div className="text-center">
-              <div className="mb-4 text-6xl">⚠️</div>
+              <div className="mb-4 text-6xl" aria-hidden="true">⚠️</div>
               <h2 className="mb-2 text-xl font-semibold text-gray-900">
                 Đã xảy ra lỗi
               </h2>
@@ -51,6 +51,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </p>
               <button
                 onClick={() => window.location.reload()}
+                aria-label="Tải lại trang"
                 className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Tải lại trang

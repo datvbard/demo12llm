@@ -1,16 +1,17 @@
 'use client'
 
 import React from 'react'
-import type { ReportResponseField } from '@/types/customer-report'
+import type { ReportResponseField, FieldValue } from '@/types/customer-report'
 
 interface ResponseFieldInputProps {
   field: ReportResponseField
-  value: any
-  onChange: (value: any) => void
+  value: FieldValue | null
+  onChange: (value: FieldValue | null) => void
   disabled?: boolean
 }
 
 export function ResponseFieldInput({ field, value, onChange, disabled }: ResponseFieldInputProps) {
+  const fieldId = `field-${field.id}`
   const baseInputClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
 
   const renderField = () => {
@@ -18,11 +19,13 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
       case 'DROPDOWN':
         return (
           <select
-            value={value ?? ''}
+            id={fieldId}
+            value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
+            aria-label={field.label}
           >
             <option value="">-- Chọn --</option>
             {field.options?.map((opt) => (
@@ -36,39 +39,49 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
       case 'TEXT':
         return (
           <input
+            id={fieldId}
             type="text"
-            value={value ?? ''}
+            value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
             placeholder={field.label}
+            aria-label={field.label}
           />
         )
 
       case 'NUMBER':
         return (
           <input
+            id={fieldId}
             type="number"
             step="any"
-            value={value ?? ''}
-            onChange={(e) => onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
+            value={String(value ?? '')}
+            onChange={(e) => {
+              const val = e.target.value === '' ? null : parseFloat(e.target.value)
+              if (val !== null && isNaN(val)) return // Prevent NaN
+              onChange(val)
+            }}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
             placeholder="0"
+            aria-label={field.label}
           />
         )
 
       case 'DATE':
         return (
           <input
+            id={fieldId}
             type="date"
-            value={value ?? ''}
+            value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
+            aria-label={field.label}
           />
         )
 
@@ -76,11 +89,13 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
         return (
           <div className="flex items-center h-10">
             <input
+              id={fieldId}
               type="checkbox"
-              checked={value ?? false}
+              checked={Boolean(value)}
               onChange={(e) => onChange(e.target.checked)}
               disabled={disabled}
               className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
+              aria-label={field.label}
             />
           </div>
         )
@@ -88,11 +103,13 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
       default:
         return (
           <input
+            id={fieldId}
             type="text"
-            value={value ?? ''}
+            value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
             disabled={disabled}
             className={baseInputClasses}
+            aria-label={field.label}
           />
         )
     }
@@ -100,7 +117,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
 
   return (
     <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {field.label}
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>

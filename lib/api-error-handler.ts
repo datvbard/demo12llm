@@ -109,3 +109,15 @@ export function notFoundError(resource: string = 'Resource'): NextResponse<ApiEr
     { status: 404 }
   )
 }
+
+/**
+ * Extract error message from unknown error type.
+ * Safe for use in catch blocks with type safety.
+ *
+ * @param error - The caught error (unknown type)
+ * @returns String representation of the error
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}

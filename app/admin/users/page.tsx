@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface Branch {
   id: string
@@ -48,7 +49,7 @@ export default function AdminUsersPage() {
         setUsers(data)
       }
     } catch (err) {
-      console.error('Failed to fetch users:', err)
+      console.error('[fetchUsers]', getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -62,7 +63,7 @@ export default function AdminUsersPage() {
         setBranches(data)
       }
     } catch (err) {
-      console.error('Failed to fetch branches:', err)
+      console.error('[fetchBranches]', getErrorMessage(err))
     }
   }
 

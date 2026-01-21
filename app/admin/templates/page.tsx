@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface Template {
   id: string
@@ -40,6 +41,7 @@ export default function TemplatesPage() {
         alert(data.error || 'Failed to delete template')
       }
     } catch (err) {
+      console.error('[handleDelete]', getErrorMessage(err))
       alert('Failed to delete template')
     } finally {
       setDeleting(null)

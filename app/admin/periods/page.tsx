@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface Period {
   id: string
@@ -64,6 +65,7 @@ export default function AdminPeriodsPage() {
         alert(data.error || 'Failed to delete period')
       }
     } catch (err) {
+      console.error('[handleDelete]', getErrorMessage(err))
       alert('Failed to delete period')
     } finally {
       setDeleting(null)

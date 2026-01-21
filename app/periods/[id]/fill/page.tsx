@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { evaluateFormula } from '@/lib/formula-parser'
 import { signOut } from 'next-auth/react'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface Field {
   id: string
@@ -71,6 +72,7 @@ export default function FillPeriodPage() {
         }
         setLoading(false)
       } catch (err) {
+        console.error('[loadData]', getErrorMessage(err))
         setError('Network error. Please try again.')
         setLoading(false)
       }
@@ -91,6 +93,7 @@ export default function FillPeriodPage() {
           body: JSON.stringify({ templateFieldId: fieldId, value }),
         })
       } catch (err) {
+        console.error('[saveValue]', getErrorMessage(err))
         setError('Failed to save')
       } finally {
         setSaving(false)
@@ -152,6 +155,7 @@ export default function FillPeriodPage() {
         setError(data.error || 'Failed to start entry')
       }
     } catch (err) {
+      console.error('[handleStartEntry]', getErrorMessage(err))
       setError('Network error. Please try again.')
     }
   }

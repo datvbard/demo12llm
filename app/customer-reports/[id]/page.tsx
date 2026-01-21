@@ -7,7 +7,8 @@ import { SignOutButton } from '@/components/sign-out-button'
 import { CustomerRowCard } from '@/components/customer-reports/customer-row-card'
 import { ProgressBar } from '@/components/customer-reports/progress-bar'
 import { SaveStatus } from '@/components/customer-reports/save-status-indicator'
-import type { ReportResponseField, CustomerRow } from '@/types/customer-report'
+import type { ReportResponseField, CustomerRow, FieldValue } from '@/types/customer-report'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 export default function FillCustomerReportPage() {
   const params = useParams()
@@ -17,7 +18,7 @@ export default function FillCustomerReportPage() {
   const [report, setReport] = useState<any>(null)
   const [rows, setRows] = useState<CustomerRow[]>([])
   const [fields, setFields] = useState<ReportResponseField[]>([])
-  const [values, setValues] = useState<Record<string, Record<string, any>>>({})
+  const [values, setValues] = useState<Record<string, Record<string, FieldValue | null>>>( {})
   const [saveStatuses, setSaveStatuses] = useState<Record<string, SaveStatus>>({})
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({})
   const [filter, setFilter] = useState<'all' | 'incomplete'>('all')
@@ -47,17 +48,18 @@ export default function FillCustomerReportPage() {
         setRows(data.rows || [])
 
         // Build values map from responses
-        const initialValues: Record<string, Record<string, any>> = {}
+        const initialValues: Record<string, Record<string, FieldValue | null>> = {}
         data.rows?.forEach((row: CustomerRow) => {
           initialValues[row.id] = {}
           row.responses?.forEach((response) => {
-            initialValues[row.id][response.fieldKey] = response.value
+            initialValues[row.id][response.fieldKey] = response.value as FieldValue | null
           })
         })
         setValues(initialValues)
 
         setLoading(false)
       } catch (err) {
+        console.error('[loadData]', getErrorMessage(err))
         setError('Network error. Please try again.')
         setLoading(false)
       }
@@ -92,16 +94,18 @@ export default function FillCustomerReportPage() {
         setTimeout(() => {
           setSaveStatuses((prev) => ({ ...prev, [rowId]: 'idle' }))
         }, 2000)
-      } catch (err: any) {
+      } catch (err) {
+        console.error('[saveRow]', getErrorMessage(err))
+        const errMsg = getErrorMessage(err)
         setSaveStatuses((prev) => ({ ...prev, [rowId]: 'error' }))
-        setSaveErrors((prev) => ({ ...prev, [rowId]: err.message }))
+        setSaveErrors((prev) => ({ ...prev, [rowId]: errMsg }))
       }
     },
     [values, report, params.id]
   )
 
   const handleChange = useCallback(
-    (rowId: string, fieldKey: string, value: any) => {
+    (rowId: string, fieldKey: string, value: FieldValue | null) => {
       setValues((prev) => ({
         ...prev,
         [rowId]: { ...prev[rowId], [fieldKey]: value },

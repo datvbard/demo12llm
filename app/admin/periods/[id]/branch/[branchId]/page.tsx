@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface Field {
   id: string
@@ -16,10 +17,16 @@ interface Value {
   value: number
 }
 
+interface Entry {
+  id: string
+  status: string
+  values?: Value[]
+}
+
 export default function BranchDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [entry, setEntry] = useState<any>(null)
+  const [entry, setEntry] = useState<Entry | null>(null)
   const [fields, setFields] = useState<Field[]>([])
   const [values, setValues] = useState<Record<string, number>>({})
   const [showConfirm, setShowConfirm] = useState(false)
@@ -46,6 +53,7 @@ export default function BranchDetailPage() {
   }, [params])
 
   async function handleConfirm() {
+    if (!entry) return
     const { id } = params
     await fetch(`/api/admin/entries/${entry.id}/confirm`, {
       method: 'POST',

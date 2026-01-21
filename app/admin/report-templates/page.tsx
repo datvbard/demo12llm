@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface ReportTemplate {
   id: string
@@ -33,6 +34,7 @@ export default function ReportTemplatesPage() {
       const data = await res.json()
       setTemplates(data.templates || [])
     } catch (err) {
+      console.error('[fetchTemplates]', getErrorMessage(err))
       setError('Failed to load templates')
     } finally {
       setLoading(false)
@@ -61,8 +63,9 @@ export default function ReportTemplatesPage() {
       setName('')
       setDescription('')
       setShowCreateForm(false)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[handleCreate]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     } finally {
       setCreating(false)
     }
@@ -83,6 +86,7 @@ export default function ReportTemplatesPage() {
         alert(data.error || 'Failed to delete template')
       }
     } catch (err) {
+      console.error('[handleDelete]', getErrorMessage(err))
       alert('Failed to delete template')
     } finally {
       setDeleting(null)

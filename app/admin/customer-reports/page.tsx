@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface CustomerReport {
   id: string
@@ -46,6 +47,7 @@ export default function CustomerReportsPage() {
       const data = await res.json()
       setReports(data.reports || [])
     } catch (err) {
+      console.error('[fetchReports]', getErrorMessage(err))
       setError('Failed to load reports')
     } finally {
       setLoading(false)
@@ -58,7 +60,7 @@ export default function CustomerReportsPage() {
       const data = await res.json()
       setTemplates(data.templates || [])
     } catch (err) {
-      console.error('Failed to load templates')
+      console.error('[fetchTemplates]', getErrorMessage(err))
     }
   }
 
@@ -77,6 +79,7 @@ export default function CustomerReportsPage() {
         alert(data.error || 'Failed to delete report')
       }
     } catch (err) {
+      console.error('[handleDelete]', getErrorMessage(err))
       alert('Failed to delete report')
     } finally {
       setDeleting(null)

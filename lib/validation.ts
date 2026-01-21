@@ -57,6 +57,42 @@ export const passwordSchema = z
   .min(8, 'Password must be at least 8 characters')
 
 /**
+ * Strong password schema with complexity requirements.
+ * Use for new user registration or password changes.
+ */
+export const strongPasswordSchema = z
+  .string()
+  .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+  .regex(/[A-Z]/, 'Phải chứa ít nhất 1 chữ hoa')
+  .regex(/[a-z]/, 'Phải chứa ít nhất 1 chữ thường')
+  .regex(/[0-9]/, 'Phải chứa ít nhất 1 số')
+  .regex(/[^A-Za-z0-9]/, 'Phải chứa ít nhất 1 ký tự đặc biệt')
+
+/**
+ * Check password strength (returns 0-4 score).
+ * 0 = very weak, 4 = very strong
+ */
+export function getPasswordStrength(password: string): number {
+  let score = 0
+  if (password.length >= 8) score++
+  if (password.length >= 12) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[a-z]/.test(password)) score++
+  if (/[0-9]/.test(password)) score++
+  if (/[^A-Za-z0-9]/.test(password)) score++
+  return Math.min(score, 4)
+}
+
+/**
+ * Get password strength label (Vietnamese).
+ */
+export function getPasswordStrengthLabel(password: string): string {
+  const score = getPasswordStrength(password)
+  const labels = ['Rất yếu', 'Yếu', 'Trung bình', 'Mạnh', 'Rất mạnh']
+  return labels[score]
+}
+
+/**
  * Pagination params schema.
  */
 export const paginationSchema = z.object({

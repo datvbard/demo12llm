@@ -3,6 +3,9 @@
 
 export type ResponseFieldType = 'DROPDOWN' | 'TEXT' | 'NUMBER' | 'DATE' | 'CHECKBOX'
 
+// Union type for field values used in components
+export type FieldValue = string | number | boolean | null
+
 export type CustomerReportStatus = 'OPEN' | 'LOCKED'
 
 export interface ReportResponseFieldOption {

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface ReportResponseField {
   id: string
@@ -66,8 +67,9 @@ export default function CustomerReportDetailPage() {
       const data = await res.json()
       setReport(data)
       setRows(data.rows || [])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[fetchReport]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -79,7 +81,7 @@ export default function CustomerReportDetailPage() {
       const data = await res.json()
       setBranches(data.branches || [])
     } catch (err) {
-      console.error('Failed to load branches')
+      console.error('[fetchBranches]', getErrorMessage(err))
     }
   }, [])
 

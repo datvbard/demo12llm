@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { getErrorMessage } from '@/lib/api-error-handler'
 
 interface ReportResponseField {
   id: string
@@ -58,8 +59,9 @@ export default function ReportTemplateDetailPage() {
       setName(data.name)
       setDescription(data.description || '')
       setFields(data.fields || [])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[fetchTemplate]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -86,8 +88,9 @@ export default function ReportTemplateDetailPage() {
       }
 
       await fetchTemplate()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[Error]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }
@@ -147,8 +150,9 @@ export default function ReportTemplateDetailPage() {
 
       setShowFieldModal(false)
       await fetchTemplate()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[Error]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     }
   }
 
@@ -162,8 +166,9 @@ export default function ReportTemplateDetailPage() {
 
       if (!res.ok) throw new Error('Failed to delete field')
       await fetchTemplate()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[Error]', getErrorMessage(err))
+      setError(getErrorMessage(err))
     }
   }
 
@@ -183,8 +188,9 @@ export default function ReportTemplateDetailPage() {
       })
 
       if (!res.ok) throw new Error('Failed to reorder fields')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('[Error]', getErrorMessage(err))
+      setError(getErrorMessage(err))
       await fetchTemplate()
     }
   }
