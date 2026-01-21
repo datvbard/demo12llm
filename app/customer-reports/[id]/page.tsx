@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SignOutButton } from '@/components/sign-out-button'
@@ -122,38 +122,42 @@ export default function FillCustomerReportPage() {
     [saveRow]
   )
 
-  // Filter and search rows
-  const filteredRows = rows.filter((row) => {
-    // Search filter
-    if (searchQuery) {
-      const searchData = Object.values(row.customerData).join(' ').toLowerCase()
-      if (!searchData.includes(searchQuery.toLowerCase())) {
-        return false
+  // Filter and search rows (memoized for performance)
+  const filteredRows = useMemo(() => {
+    return rows.filter((row) => {
+      // Search filter
+      if (searchQuery) {
+        const searchData = Object.values(row.customerData).join(' ').toLowerCase()
+        if (!searchData.includes(searchQuery.toLowerCase())) {
+          return false
+        }
       }
-    }
 
-    // Completion filter
-    if (filter === 'incomplete') {
+      // Completion filter
+      if (filter === 'incomplete') {
+        const requiredFields = fields.filter((f) => f.required)
+        const isComplete = requiredFields.every((field) => {
+          const value = values[row.id]?.[field.key]
+          return value !== null && value !== '' && value !== undefined
+        })
+        return !isComplete
+      }
+
+      return true
+    })
+  }, [rows, searchQuery, filter, fields, values])
+
+  // Calculate progress (memoized for performance)
+  const totalRows = rows.length
+  const completedRows = useMemo(() => {
+    return rows.filter((row) => {
       const requiredFields = fields.filter((f) => f.required)
-      const isComplete = requiredFields.every((field) => {
+      return requiredFields.every((field) => {
         const value = values[row.id]?.[field.key]
         return value !== null && value !== '' && value !== undefined
       })
-      return !isComplete
-    }
-
-    return true
-  })
-
-  // Calculate progress
-  const totalRows = rows.length
-  const completedRows = rows.filter((row) => {
-    const requiredFields = fields.filter((f) => f.required)
-    return requiredFields.every((field) => {
-      const value = values[row.id]?.[field.key]
-      return value !== null && value !== '' && value !== undefined
-    })
-  }).length
+    }).length
+  }, [rows, fields, values])
 
   if (loading) {
     return (

@@ -1,19 +1,43 @@
 import { requireAdmin } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { handleApiError } from '@/lib/api-error-handler'
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/lib/constants'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await requireAdmin()
-    const periods = await prisma.period.findMany({
-      include: {
-        template: { select: { name: true } },
-        _count: { select: { entries: true } },
+
+    const { searchParams } = new URL(req.url)
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+    const limit = Math.min(
+      MAX_PAGE_SIZE,
+      Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10))
+    )
+    const skip = (page - 1) * limit
+
+    const [periods, total] = await Promise.all([
+      prisma.period.findMany({
+        include: {
+          template: { select: { name: true } },
+          _count: { select: { entries: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.period.count(),
+    ])
+
+    return NextResponse.json({
+      data: periods,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
     })
-    return NextResponse.json(periods)
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/periods', 'Failed to get periods')
   }

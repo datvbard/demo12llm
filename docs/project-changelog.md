@@ -2,6 +2,75 @@
 
 ## [Unreleased]
 
+### Added - Testing Infrastructure (2026-01-22)
+
+**E2E Testing Setup**
+- `playwright.config.ts` - Playwright E2E testing configuration
+  - Auto-starts dev server before tests (`webServer` config)
+  - Reuses existing server in local development (`reuseExistingServer`)
+  - Runs tests in parallel for speed (`fullyParallel: true`)
+  - Records trace on retry for debugging (`trace: 'on-first-retry'`)
+  - Screenshots on failure (`screenshot: 'only-on-failure'`)
+  - CI-optimized retries (`retries: process.env.CI ? 2 : 0`)
+
+**Test Data Management**
+- `tests/seed.ts` - Test data seeding with idempotent upserts
+  - Test admin user (`admin@example.com` / `password123`)
+  - Test branch user (`branch1@example.com` / `password123`)
+  - Test branch (`test-branch-001` - Chi nhánh Test)
+  - Test template (`test-template-001` - Mẫu Báo Cáo Test)
+  - Test period (`test-period-001` - Tháng 1/2026)
+  - Safe to run multiple times (uses upsert operations)
+
+- `tests/setup.ts` - Test setup and cleanup utilities
+  - `setupTestDatabase()` - Seeds test data before tests
+  - `cleanupTestDatabase()` - Deletes test data after tests (respects FK constraints)
+  - `teardownTestDatabase()` - Disconnects Prisma client
+  - Proper deletion order: entry values → entries → template fields → periods → templates → users → branches
+
+**Test Scripts**
+- `npm test` - Run all E2E tests headless
+- `npm run test:ui` - Run tests with Playwright UI mode
+- `npm run test:headed` - Run tests in headed mode (visible browser)
+- `npm run test:debug` - Run tests in debug mode with inspector
+- `npm run test:seed` - Seed test data directly via tsx
+
+**E2E Test Files**
+- `tests/e2e/auth.spec.ts` - Authentication tests
+  - Admin can login and access admin routes
+  - Branch user cannot access admin routes (redirected to login)
+  - Unauthenticated user redirected to login
+
+- `tests/e2e/admin-workflow.spec.ts` - Admin workflow tests
+  - View admin dashboard
+  - View templates page
+  - Create template
+  - View periods page
+  - Create period
+
+- `tests/e2e/branch-workflow.spec.ts` - Branch workflow tests
+  - View branch dashboard
+  - View periods page
+  - Fill data for period
+
+**Test Configuration**
+- Base URL: `http://localhost:3000`
+- Test directory: `./tests/e2e`
+- Browser: Chromium (Desktop Chrome)
+- Timeout: 120s for server startup
+- Parallel execution enabled for speed
+- Retry on failure only in CI
+
+**Related Files Modified**
+- `package.json` - Added test scripts and @playwright/test dependency
+
+**Success Metrics**:
+- ✅ Playwright config with webServer auto-start
+- ✅ Test data seeding with idempotent upserts
+- ✅ Test cleanup respecting foreign key constraints
+- ✅ 11 E2E tests covering auth, admin, and branch workflows
+- ✅ Test scripts for different modes (headless, UI, headed, debug)
+
 ### Added - Phase 06: UI/UX & Accessibility Improvements (2026-01-22)
 
 **New UI Components**

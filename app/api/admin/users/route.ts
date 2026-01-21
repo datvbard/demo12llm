@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/server-auth'
 import { getBranchUsers, createUser, isUsernameAvailable, isEmailAvailable, getBranches } from '@/lib/user-utils'
 import { Role } from '@prisma/client'
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/lib/constants'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await requireAdmin()
-    const users = await getBranchUsers()
+
+    const { searchParams } = new URL(req.url)
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+    const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_PAGE_SIZE), 10)))
+
+    const users = await getBranchUsers({ page, limit })
     return NextResponse.json(users)
   } catch (error) {
     console.error('Get users error:', error)
