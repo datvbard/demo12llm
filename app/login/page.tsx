@@ -57,7 +57,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Hệ Thống Quản Lý Dữ Liệu Theo Chi Nhánh
+            Báo Cáo Online - Phòng KHCN
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Đăng nhập để tiếp tục

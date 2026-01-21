@@ -22,7 +22,7 @@ export default async function BranchProfilePage() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Hệ Thống Quản Lý Dữ Liệu Theo Chi Nhánh
+                  Báo Cáo Online - Phòng KHCN
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Hồ sơ cá nhân
