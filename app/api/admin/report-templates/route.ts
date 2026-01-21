@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { createTemplateSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
@@ -33,12 +34,8 @@ export async function GET(req: Request) {
       templates,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     })
-  } catch (error: any) {
-    console.error('[GET /api/admin/report-templates]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get report templates' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[GET /api/admin/report-templates]', 'Failed to get report templates')
   }
 }
 
@@ -59,17 +56,13 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(template, { status: 201 })
-  } catch (error: any) {
-    console.error('[POST /api/admin/report-templates]', error)
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
         { status: 400 }
       )
     }
-    return NextResponse.json(
-      { error: error.message || 'Failed to create report template' },
-      { status: 500 }
-    )
+    return handleApiError(error, '[POST /api/admin/report-templates]', 'Failed to create report template')
   }
 }

@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
@@ -10,12 +11,8 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(templates)
-  } catch (error: any) {
-    console.error('[GET /api/templates]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get templates' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[GET /api/templates]', 'Failed to get templates')
   }
 }
 
@@ -38,12 +35,8 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(template)
-  } catch (error: any) {
-    console.error('[POST /api/templates]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create template' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[POST /api/templates]', 'Failed to create template')
   }
 }
 
@@ -78,11 +71,7 @@ export async function DELETE(req: Request) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('[DELETE /api/templates]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete template' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[DELETE /api/templates]', 'Failed to delete template')
   }
 }

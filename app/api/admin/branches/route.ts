@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/server-auth'
 import { getBranches } from '@/lib/user-utils'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET() {
   try {
@@ -8,7 +9,6 @@ export async function GET() {
     const branches = await getBranches()
     return NextResponse.json(branches)
   } catch (error) {
-    console.error('Get branches error:', error)
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return handleApiError(error, 'GET /api/admin/branches', 'Failed to get branches')
   }
 }

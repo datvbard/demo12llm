@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { updateTemplateSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
@@ -27,12 +28,8 @@ export async function GET(
     }
 
     return NextResponse.json(template)
-  } catch (error: any) {
-    console.error('[GET /api/admin/report-templates/[id]]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get report template' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[GET /api/admin/report-templates/[id]]', 'Failed to get report template')
   }
 }
 
@@ -54,24 +51,20 @@ export async function PATCH(
     })
 
     return NextResponse.json(template)
-  } catch (error: any) {
-    console.error('[PATCH /api/admin/report-templates/[id]]', error)
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
         { status: 400 }
       )
     }
-    if (error.code === 'P2025') {
+    if (error instanceof Error && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Report template not found' },
         { status: 404 }
       )
     }
-    return NextResponse.json(
-      { error: error.message || 'Failed to update report template' },
-      { status: 500 }
-    )
+    return handleApiError(error, '[PATCH /api/admin/report-templates/[id]]', 'Failed to update report template')
   }
 }
 
@@ -100,17 +93,13 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('[DELETE /api/admin/report-templates/[id]]', error)
-    if (error.code === 'P2025') {
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'P2025') {
       return NextResponse.json(
         { error: 'Report template not found' },
         { status: 404 }
       )
     }
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete report template' },
-      { status: 500 }
-    )
+    return handleApiError(error, '[DELETE /api/admin/report-templates/[id]]', 'Failed to delete report template')
   }
 }

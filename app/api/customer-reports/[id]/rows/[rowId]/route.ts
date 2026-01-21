@@ -2,6 +2,7 @@ import { requireBranch } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { updateResponseSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function PATCH(
   req: Request,
@@ -70,17 +71,7 @@ export async function PATCH(
     })
 
     return NextResponse.json(updatedRow)
-  } catch (error: any) {
-    console.error('[PATCH /api/customer-reports/[id]/rows/[rowId]]', error)
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      )
-    }
-    return NextResponse.json(
-      { error: error.message || 'Failed to update responses' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'PATCH /api/customer-reports/[id]/rows/[rowId]', 'Failed to update responses')
   }
 }

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { createCustomerReportSchema } from '@/lib/validations/customer-report'
 import { parseExcelFile, mapBranchNamesToIds, validateFileSize } from '@/lib/excel-parser'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(req: Request) {
   try {
@@ -38,12 +39,8 @@ export async function GET(req: Request) {
       reports,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     })
-  } catch (error: any) {
-    console.error('[GET /api/admin/customer-reports]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get customer reports' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/admin/customer-reports', 'Failed to get customer reports')
   }
 }
 
@@ -143,11 +140,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(result, { status: 201 })
-  } catch (error: any) {
-    console.error('[POST /api/admin/customer-reports]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create customer report' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'POST /api/admin/customer-reports', 'Failed to create customer report')
   }
 }

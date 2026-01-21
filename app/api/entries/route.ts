@@ -1,6 +1,7 @@
 import { requireBranch } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function POST(req: Request) {
   try {
@@ -23,12 +24,8 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(entry)
-  } catch (error: any) {
-    console.error('[POST /api/entries]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create entry' },
-      { status: error.message === 'Not authenticated' ? 401 : 400 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'POST /api/entries', 'Failed to create entry')
   }
 }
 
@@ -59,11 +56,7 @@ export async function GET(req: Request) {
     })
 
     return NextResponse.json(entry)
-  } catch (error: any) {
-    console.error('[GET /api/entries]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get entry' },
-      { status: error.message === 'Not authenticated' ? 401 : 400 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/entries', 'Failed to get entry')
   }
 }

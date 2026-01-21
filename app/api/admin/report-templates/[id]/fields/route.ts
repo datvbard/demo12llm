@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { createFieldSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
@@ -17,12 +18,8 @@ export async function GET(
     })
 
     return NextResponse.json(fields)
-  } catch (error: any) {
-    console.error('[GET /api/admin/report-templates/[id]/fields]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get fields' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[GET /api/admin/report-templates/[id]/fields]', 'Failed to get fields')
   }
 }
 
@@ -69,17 +66,13 @@ export async function POST(
     })
 
     return NextResponse.json(field, { status: 201 })
-  } catch (error: any) {
-    console.error('[POST /api/admin/report-templates/[id]/fields]', error)
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
         { status: 400 }
       )
     }
-    return NextResponse.json(
-      { error: error.message || 'Failed to create field' },
-      { status: 500 }
-    )
+    return handleApiError(error, '[POST /api/admin/report-templates/[id]/fields]', 'Failed to create field')
   }
 }

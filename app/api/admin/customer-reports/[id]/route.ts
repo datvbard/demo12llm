@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { updateCustomerReportSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(
   req: Request,
@@ -32,12 +33,8 @@ export async function GET(
     }
 
     return NextResponse.json(report)
-  } catch (error: any) {
-    console.error('[GET /api/admin/customer-reports/[id]]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get customer report' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/admin/customer-reports/[id]', 'Failed to get customer report')
   }
 }
 
@@ -58,24 +55,8 @@ export async function PATCH(
     })
 
     return NextResponse.json(report)
-  } catch (error: any) {
-    console.error('[PATCH /api/admin/customer-reports/[id]]', error)
-    if (error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      )
-    }
-    if (error.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Customer report not found' },
-        { status: 404 }
-      )
-    }
-    return NextResponse.json(
-      { error: error.message || 'Failed to update customer report' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'PATCH /api/admin/customer-reports/[id]', 'Failed to update customer report')
   }
 }
 
@@ -92,17 +73,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('[DELETE /api/admin/customer-reports/[id]]', error)
-    if (error.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Customer report not found' },
-        { status: 404 }
-      )
-    }
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete customer report' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'DELETE /api/admin/customer-reports/[id]', 'Failed to delete customer report')
   }
 }

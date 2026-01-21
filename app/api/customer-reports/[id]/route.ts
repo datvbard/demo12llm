@@ -1,6 +1,7 @@
 import { requireBranch } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(
   req: Request,
@@ -42,11 +43,7 @@ export async function GET(
       ...report,
       rows,
     })
-  } catch (error: any) {
-    console.error('[GET /api/customer-reports/[id]]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get customer report' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/customer-reports/[id]', 'Failed to get customer report')
   }
 }

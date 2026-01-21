@@ -1,47 +1,64 @@
 import { requireBranch } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { handleApiError, validationError } from '@/lib/api-error-handler'
+import { validateUUID } from '@/lib/validation'
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ entryId: string }> }
 ) {
-  const user = await requireBranch()
-  const { entryId } = await params
-  const { templateFieldId, value } = await req.json()
+  try {
+    const user = await requireBranch()
+    const { entryId } = await params
+    const { templateFieldId, value } = await req.json()
 
-  const entry = await prisma.entry.findUnique({
-    where: { id: entryId },
-    include: { period: true },
-  })
+    // Validate UUIDs
+    if (!validateUUID(entryId)) {
+      return validationError('Invalid entry ID')
+    }
+    if (!validateUUID(templateFieldId)) {
+      return validationError('Invalid template field ID')
+    }
 
-  if (!entry || entry.branchId !== user.branchId) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    // Check entry ownership and period status
+    const entry = await prisma.entry.findUnique({
+      where: { id: entryId },
+      include: { period: true },
+    })
+
+    if (!entry || entry.branchId !== user.branchId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    if (entry.period.status !== 'OPEN' || entry.status === 'LOCKED') {
+      return NextResponse.json({ error: 'Period locked' }, { status: 400 })
+    }
+
+    // Use transaction to prevent race condition
+    await prisma.$transaction([
+      prisma.entryValue.upsert({
+        where: {
+          entryId_templateFieldId: {
+            entryId,
+            templateFieldId,
+          },
+        },
+        create: {
+          entryId,
+          templateFieldId,
+          value,
+        },
+        update: { value },
+      }),
+      prisma.entry.update({
+        where: { id: entryId },
+        data: { updatedAt: new Date() },
+      }),
+    ])
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    return handleApiError(error, 'PATCH /api/entries/[entryId]', 'Failed to update entry')
   }
-
-  if (entry.period.status !== 'OPEN' || entry.status === 'LOCKED') {
-    return NextResponse.json({ error: 'Period locked' }, { status: 400 })
-  }
-
-  await prisma.entryValue.upsert({
-    where: {
-      entryId_templateFieldId: {
-        entryId,
-        templateFieldId,
-      },
-    },
-    create: {
-      entryId,
-      templateFieldId,
-      value,
-    },
-    update: { value },
-  })
-
-  await prisma.entry.update({
-    where: { id: entryId },
-    data: { updatedAt: new Date() },
-  })
-
-  return NextResponse.json({ success: true })
 }

@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { generatePDF } from '@/lib/export/pdf'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(
   req: Request,
@@ -90,11 +91,7 @@ export async function GET(
         'Content-Disposition': `attachment; filename="${encodeURIComponent(report.name)}.pdf"`,
       },
     })
-  } catch (error: any) {
-    console.error('[GET /api/admin/customer-reports/[id]/export/pdf]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to export PDF' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/admin/customer-reports/[id]/export/pdf', 'Failed to export PDF')
   }
 }

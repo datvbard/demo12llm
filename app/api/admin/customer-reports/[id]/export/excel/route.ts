@@ -2,6 +2,7 @@ import { requireAdmin } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { generateExcel } from '@/lib/export/excel'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET(
   req: Request,
@@ -90,11 +91,7 @@ export async function GET(
         'Content-Disposition': `attachment; filename="${encodeURIComponent(report.name)}.xlsx"`,
       },
     })
-  } catch (error: any) {
-    console.error('[GET /api/admin/customer-reports/[id]/export/excel]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to export Excel' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/admin/customer-reports/[id]/export/excel', 'Failed to export Excel')
   }
 }

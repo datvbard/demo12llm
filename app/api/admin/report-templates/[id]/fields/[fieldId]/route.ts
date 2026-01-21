@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { updateFieldSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
@@ -32,18 +33,14 @@ export async function PATCH(
     })
 
     return NextResponse.json(updated)
-  } catch (error: any) {
-    console.error('[PATCH /api/admin/report-templates/[id]/fields/[fieldId]]', error)
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
         { status: 400 }
       )
     }
-    return NextResponse.json(
-      { error: error.message || 'Failed to update field' },
-      { status: 500 }
-    )
+    return handleApiError(error, '[PATCH /api/admin/report-templates/[id]/fields/[fieldId]]', 'Failed to update field')
   }
 }
 
@@ -72,11 +69,7 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('[DELETE /api/admin/report-templates/[id]/fields/[fieldId]]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete field' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, '[DELETE /api/admin/report-templates/[id]/fields/[fieldId]]', 'Failed to delete field')
   }
 }

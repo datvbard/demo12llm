@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { handleApiError } from '@/lib/api-error-handler'
 
 export async function GET() {
   try {
@@ -13,12 +14,8 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(periods)
-  } catch (error: any) {
-    console.error('[GET /api/admin/periods]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get periods' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'GET /api/admin/periods', 'Failed to get periods')
   }
 }
 
@@ -46,12 +43,8 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(period)
-  } catch (error: any) {
-    console.error('[POST /api/admin/periods]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to create period' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'POST /api/admin/periods', 'Failed to create period')
   }
 }
 
@@ -79,11 +72,7 @@ export async function DELETE(req: Request) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('[DELETE /api/admin/periods]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete period' },
-      { status: 500 }
-    )
+  } catch (error) {
+    return handleApiError(error, 'DELETE /api/admin/periods', 'Failed to delete period')
   }
 }

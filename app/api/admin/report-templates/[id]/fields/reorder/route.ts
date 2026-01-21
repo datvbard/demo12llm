@@ -1,4 +1,5 @@
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { reorderFieldsSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
@@ -38,17 +39,13 @@ export async function PATCH(
     )
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    console.error('[PATCH /api/admin/report-templates/[id]/fields/reorder]', error)
-    if (error.name === 'ZodError') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
         { status: 400 }
       )
     }
-    return NextResponse.json(
-      { error: error.message || 'Failed to reorder fields' },
-      { status: 500 }
-    )
+    return handleApiError(error, '[PATCH /api/admin/report-templates/[id]/fields/reorder]', 'Failed to reorder fields')
   }
 }

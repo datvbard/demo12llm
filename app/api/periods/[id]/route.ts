@@ -1,4 +1,5 @@
 import { requireBranch } from '@/lib/server-auth'
+import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
@@ -29,11 +30,10 @@ export async function GET(
     }
 
     return NextResponse.json(period)
-  } catch (error: any) {
-    console.error('[GET /api/periods/:id]', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to get period' },
-      { status: error.message === 'Not authenticated' ? 401 : 400 }
-    )
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Not authenticated') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    return handleApiError(error, '[GET /api/periods/:id]', 'Failed to get period')
   }
 }
