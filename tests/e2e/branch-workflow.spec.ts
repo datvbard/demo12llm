@@ -3,14 +3,15 @@ import { test, expect } from '@playwright/test'
 test.describe('Branch Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login')
-    await page.fill('input[type="email"]', 'branch1@example.com')
-    await page.fill('input[type="password"]', 'password123')
+    await page.fill('#identifier', 'branch1@example.com')
+    await page.fill('#password', 'password123')
     await page.click('button[type="submit"]')
     await page.waitForURL(/\/periods/)
   })
 
   test('view periods list', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Periods')
+    await page.goto('/periods')
+    await expect(page.getByRole('heading', { name: 'Kỳ Báo Cáo' })).toBeVisible()
   })
 
   test('data entry autosaves', async ({ page }) => {
@@ -25,7 +26,7 @@ test.describe('Branch Workflow', () => {
 
       const inputs = await page.locator('input[type="number"]').count()
       if (inputs > 0) {
-        await page.fill('input[type="number"]', '123.45')
+        await page.locator('input[type="number"]').first().fill('123.45')
         await page.waitForTimeout(1000)
       }
     }
@@ -39,16 +40,16 @@ test.describe('Branch Workflow', () => {
     if (isVisible) {
       await viewButton.click()
 
-      const submitButton = page.getByText('Submit').first()
+      const submitButton = page.getByRole('button', { name: /gửi/i }).first()
       if (await submitButton.isVisible()) {
         await submitButton.click()
-        await expect(page.locator('text=SUBMITTED')).toBeVisible()
+        await expect(page.getByText('Đã gửi')).toBeVisible()
       }
 
-      const withdrawButton = page.getByText('Withdraw').first()
+      const withdrawButton = page.getByRole('button', { name: /thu hồi/i }).first()
       if (await withdrawButton.isVisible()) {
         await withdrawButton.click()
-        await expect(page.locator('text=DRAFT')).toBeVisible()
+        await expect(page.getByText('Bản nháp')).toBeVisible()
       }
     }
   })
