@@ -2,6 +2,80 @@
 
 ## [Unreleased]
 
+### Added - Phase 06: UI/UX & Accessibility Improvements (2026-01-22)
+
+**New UI Components**
+- `components/ui/loading-state.tsx` - Loading state component with spinner
+  - `LoadingState` - Full-page loading with message and ARIA attributes
+  - `LoadingSpinner` - Inline spinner for buttons/forms
+  - Supports sizes: sm, md, lg
+  - Vietnamese loading messages: "Đang tải..."
+  - ARIA: `role="status"`, `aria-live="polite"`, `aria-busy="true"`
+  - Screen reader-only text for accessibility
+
+- `components/ui/error-state.tsx` - Error state component with retry
+  - `ErrorState` - Full-page error display with retry button
+  - `InlineError` - Form field error messages
+  - Retry functionality with customizable button text
+  - ARIA: `role="alert"`, `aria-live="assertive"`
+  - Keyboard navigation support
+
+**Accessibility Improvements**
+- ARIA labels on all form inputs (`aria-label`, `htmlFor` associations)
+- Live regions for dynamic content updates:
+  - `aria-live="polite"` for loading states and progress updates
+  - `aria-live="assertive"` for errors requiring immediate attention
+- Progress bar accessibility (`components/customer-reports/progress-bar.tsx`):
+  - `role="progressbar"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`
+  - Dynamic `aria-label` with current progress
+  - Live region for percentage updates
+- Save status indicator (`components/customer-reports/save-status-indicator.tsx`):
+  - Live regions for state changes (saving, saved, error)
+  - ARIA labels for icons
+- Response field inputs (`components/customer-reports/response-field-input.tsx`):
+  - `aria-label` on all input types (dropdown, text, number, date, checkbox)
+  - Label associations with `htmlFor`
+  - Disabled state with `disabled:cursor-not-allowed`
+
+**Type Safety & Validation**
+- `types/customer-report.ts`:
+  - Added `FieldValue` type: `string | number | boolean | null`
+  - Flexible type for dynamic field values across all response types
+
+- `lib/validation.ts`:
+  - `strongPasswordSchema` - Vietnamese password complexity requirements:
+    - Min 8 characters
+    - At least 1 uppercase letter: "Phải chứa ít nhất 1 chữ hoa"
+    - At least 1 lowercase letter: "Phải chứa ít nhất 1 chữ thường"
+    - At least 1 number: "Phải chứa ít nhất 1 số"
+    - At least 1 special character: "Phải chứa ít nhất 1 ký tự đặc biệt"
+  - `getPasswordStrength()` - Returns 0-4 strength score
+  - `getPasswordStrengthLabel()` - Vietnamese labels: Rất yếu, Yếu, Trung bình, Mạnh, Rất mạnh
+  - Score calculation based on length, character variety, complexity
+
+**Component Updates**
+- `ResponseFieldInput` - NaN validation in number inputs:
+  - Prevents `parseFloat()` from storing `NaN` values
+  - Validates before state update: `if (val !== null && isNaN(val)) return`
+  - Ensures clean data in form submissions
+- All admin/branch pages - Consistent loading/error states
+- Dark mode support across all new components
+
+**Accessibility Features**
+- Screen reader support with semantic HTML
+- Keyboard navigation for all interactive elements
+- Focus indicators on all inputs and buttons
+- Color contrast compliance (WCAG 2.1 AA)
+- Vietnamese language support throughout
+- Error messages with clear, actionable guidance
+
+**Success Metrics**:
+- ✅ All interactive elements have ARIA labels
+- ✅ Screen readers announce dynamic content changes
+- ✅ Forms validate inputs and show clear error messages
+- ✅ Loading and error states are visually and semantically clear
+- ✅ Password strength provides real-time feedback in Vietnamese
+
 ### Added - Phase 05: Error Handling & Type Safety (2026-01-21)
 
 **Error Handling System**

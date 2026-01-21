@@ -148,6 +148,54 @@ export function cn(...inputs: ClassValue[]) {
 
 Purpose: Merge Tailwind classes intelligently, remove conflicts.
 
+#### Loading State Pattern
+
+**Usage** (`components/ui/loading-state.tsx`):
+```typescript
+import { LoadingState, LoadingSpinner } from '@/components/ui/loading-state'
+
+// Full-page loading
+<LoadingState message="Đang tải dữ liệu..." size="lg" />
+
+// Inline spinner (buttons, forms)
+<button>
+  <LoadingSpinner size="sm" />
+  Lưu
+</button>
+```
+
+**Accessibility Features**:
+- `role="status"` - Semantically indicates loading state
+- `aria-live="polite"` - Announces loading to screen readers
+- `aria-busy="true"` - Indicates content is being loaded
+- `sr-only` text - Screen reader-only loading message
+- Size variants: sm, md, lg
+
+#### Error State Pattern
+
+**Usage** (`components/ui/error-state.tsx`):
+```typescript
+import { ErrorState, InlineError } from '@/components/ui/error-state'
+
+// Full-page error with retry
+<ErrorState
+  message="Không thể tải dữ liệu"
+  description="Vui lòng kiểm tra kết nối và thử lại"
+  onRetry={() => refetch()}
+  retryText="Thử lại"
+/>
+
+// Inline form error
+<InlineError message="Email này đã được sử dụng" />
+```
+
+**Accessibility Features**:
+- `role="alert"` - Immediate announcement to screen readers
+- `aria-live="assertive"` - Interrupts for urgent messages
+- Focus management on retry button
+- Keyboard navigation support
+- Clear error messages with actionable guidance
+
 #### Prisma Singleton
 
 ```typescript
@@ -393,6 +441,191 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 import { withErrorBoundary } from '@/components/error-boundary'
 
 export default withErrorBoundary(MyComponent)
+```
+
+## Accessibility Standards (Phase 06)
+
+### ARIA Labels & Attributes
+
+**Form Inputs Pattern**:
+```typescript
+// Correct: Label association + ARIA label
+<label htmlFor={fieldId}>{field.label}</label>
+<input
+  id={fieldId}
+  aria-label={field.label}
+  required={field.required}
+/>
+
+// Dynamic fields: Use aria-label for screen readers
+<select aria-label={field.label}>
+  {options.map(opt => <option key={opt.value}>{opt.label}</option>)}
+</select>
+```
+
+**Live Regions for Dynamic Content**:
+```typescript
+// Loading states - polite announcements
+<div role="status" aria-live="polite" aria-busy="true">
+  <Loader2 className="animate-spin" />
+  <span>Đang tải...</span>
+</div>
+
+// Progress updates - polite live region
+<div aria-live="polite">
+  {current}/{total} ({percentage}%)
+</div>
+
+// Errors - assertive (immediate) announcements
+<div role="alert" aria-live="assertive">
+  <AlertCircle aria-hidden="true" />
+  <span>Không thể lưu dữ liệu</span>
+</div>
+```
+
+**Progress Bar Pattern** (`components/customer-reports/progress-bar.tsx`):
+```typescript
+<div
+  role="progressbar"
+  aria-valuenow={current}
+  aria-valuemin={0}
+  aria-valuemax={total}
+  aria-label={`Tiến độ: ${current} trên ${total}`}
+>
+  <div aria-live="polite">{current}/{total} ({percentage}%)</div>
+  <div aria-hidden="true">
+    <ProgressBarFill width={`${percentage}%`} />
+  </div>
+</div>
+```
+
+### Keyboard Navigation
+
+**Focus Management**:
+```typescript
+// All interactive elements must be keyboard accessible
+<button
+  className="focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+  aria-label="Close modal"
+>
+  <X aria-hidden="true" />
+</button>
+
+// Skip links for keyboard users
+<a href="#main-content" className="sr-only focus:not-sr-only">
+  Skip to main content
+</a>
+```
+
+### Screen Reader Support
+
+**Icon-Only Buttons**:
+```typescript
+<button aria-label="Delete item">
+  <Trash2 aria-hidden="true" />
+</button>
+```
+
+**Hidden Text for Screen Readers**:
+```typescript
+<div className="flex items-center">
+  <Loader2 className="animate-spin" aria-hidden="true" />
+  <span>Loading...</span>
+  <span className="sr-only">Đang tải...</span>
+</div>
+```
+
+### Form Validation Feedback
+
+**Password Strength Pattern** (`lib/validation.ts`):
+```typescript
+import { getPasswordStrengthLabel, getPasswordStrength } from '@/lib/validation'
+
+// Real-time feedback
+const strength = getPasswordStrength(password)
+const label = getPasswordStrengthLabel(password) // "Rất yếu", "Yếu", etc.
+
+<div aria-live="polite">
+  <ProgressBar value={strength} max={4} />
+  <span>{label}</span>
+</div>
+```
+
+**Field-Level Errors**:
+```typescript
+<p className="text-red-600" role="alert" id={`error-${fieldId}`}>
+  <span className="sr-only">Lỗi: </span>
+  {errorMessage}
+</p>
+
+<input
+  aria-invalid={hasError}
+  aria-describedby={hasError ? `error-${fieldId}` : undefined}
+/>
+```
+
+### Vietnamese Language Support
+
+**Accessibility Labels**:
+```typescript
+// Always provide Vietnamese labels for Vietnamese UI
+<input aria-label="Họ và tên" placeholder="Nhập họ và tên" />
+<button aria-label="Lưu thay đổi">Lưu</button>
+
+// Loading states
+<LoadingState message="Đang tải..." />
+
+// Error messages
+<ErrorState message="Có lỗi xảy ra" retryText="Thử lại" />
+```
+
+**Password Validation Messages** (`lib/validation.ts`):
+```typescript
+export const strongPasswordSchema = z
+  .string()
+  .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+  .regex(/[A-Z]/, 'Phải chứa ít nhất 1 chữ hoa')
+  .regex(/[a-z]/, 'Phải chứa ít nhất 1 chữ thường')
+  .regex(/[0-9]/, 'Phải chứa ít nhất 1 số')
+  .regex(/[^A-Za-z0-9]/, 'Phải chứa ít nhất 1 ký tự đặc biệt')
+```
+
+### Color Contrast & Visual Accessibility
+
+**Requirements**:
+- WCAG 2.1 AA compliance (4.5:1 for normal text, 3:1 for large text)
+- Focus indicators on all interactive elements
+- Not rely on color alone to convey information
+- Support dark mode with proper contrast
+
+**Dark Mode Support**:
+```typescript
+className="text-gray-900 dark:text-gray-100
+           bg-white dark:bg-gray-800
+           border-gray-300 dark:border-gray-600"
+```
+
+### Type Safety for Forms
+
+**FieldValue Type** (`types/customer-report.ts`):
+```typescript
+// Flexible type for dynamic field values
+export type FieldValue = string | number | boolean | null
+
+// Usage in components
+interface ResponseFieldInputProps {
+  value: FieldValue | null
+  onChange: (value: FieldValue | null) => void
+}
+```
+
+**NaN Prevention in Number Inputs**:
+```typescript
+onChange={(e) => {
+  const val = e.target.value === '' ? null : parseFloat(e.target.value)
+  if (val !== null && isNaN(val)) return // Prevent NaN
+  onChange(val)
+}}
 ```
 
 ## API Route Standards (Phase 02)

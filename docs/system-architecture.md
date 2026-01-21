@@ -58,6 +58,8 @@ branch-data-approval-system/
 - UUID v4 validation with Zod schemas
 - Email, username, password, and pagination validators
 - Helper functions: `validateUUID()`, `validateUUIDOrThrow()`
+- Password strength validation with Vietnamese labels (`getPasswordStrength()`, `getPasswordStrengthLabel()`)
+- Strong password schema: 8+ chars, uppercase, lowercase, number, special char
 
 **React Error Boundary** (`components/error-boundary.tsx`):
 - Catches runtime errors in React components
@@ -79,7 +81,44 @@ branch-data-approval-system/
 - Atomic upsert with timestamp update
 - Prevents concurrent update conflicts
 
-### 2. Security Layers
+### 2. UI/UX & Accessibility (Phase 06)
+
+**Loading State Component** (`components/ui/loading-state.tsx`):
+- `LoadingState` - Full-page loading with spinner and message
+- `LoadingSpinner` - Inline spinner for buttons/forms
+- ARIA attributes: `role="status"`, `aria-live="polite"`, `aria-busy="true"`
+- Screen reader-only text for accessibility
+- Size variants: sm, md, lg
+- Vietnamese messages: "Đang tải..."
+
+**Error State Component** (`components/ui/error-state.tsx`):
+- `ErrorState` - Full-page error display with retry button
+- `InlineError` - Form field error messages
+- ARIA attributes: `role="alert"`, `aria-live="assertive"`
+- Keyboard navigation support
+- Customizable retry functionality
+
+**Accessibility Standards**:
+- ARIA labels on all form inputs (`aria-label`, `htmlFor` associations)
+- Live regions for dynamic content:
+  - `aria-live="polite"` for loading/progress updates
+  - `aria-live="assertive"` for errors
+- Progress bar with `role="progressbar"` and value attributes
+- Save status indicator with live regions for state changes
+- Response field inputs with ARIA labels for all types
+
+**Type Safety**:
+- `FieldValue` type: `string | number | boolean | null` for flexible field values
+- NaN validation in number inputs to prevent invalid state
+- Consistent typing across all form components
+
+**Vietnamese Language Support**:
+- All UI labels and messages in Vietnamese
+- Password validation messages: "Phải chứa ít nhất 1 chữ hoa", etc.
+- Password strength labels: "Rất yếu", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"
+- Loading/error messages: "Đang tải...", "Thử lại", etc.
+
+### 3. Security Layers
 
 **Rate Limiting** (`middleware.ts`, `lib/rate-limit.ts`):
 - In-memory rate limiting: 100 requests/minute per IP
