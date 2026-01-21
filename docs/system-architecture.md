@@ -79,7 +79,7 @@ NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 
 ### Overview
 
-PostgreSQL database with 6 core models supporting multi-branch data submission, approval workflow, and dynamic template system.
+PostgreSQL database with 11 core models supporting multi-branch data submission, approval workflow, dynamic template system, and customer report Excel upload feature.
 
 ### Models
 
@@ -88,12 +88,17 @@ PostgreSQL database with 6 core models supporting multi-branch data submission, 
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
 | `User` | Authentication & authorization | `email`, `password`, `role`, `branchId` |
-| `Branch` | Branch/organization entity | `name` (unique), users, entries |
+| `Branch` | Branch/organization entity | `name` (unique), users, entries, rows |
 | `Template` | Dynamic form templates | `name`, fields, periods |
 | `TemplateField` | Configurable form fields | `label`, `key`, `formula` |
 | `Period` | Time-based collection periods | `name`, `status` (OPEN/LOCKED) |
 | `Entry` | Data submission records | `status`, `submittedAt`, `confirmedAt` |
 | `EntryValue` | Actual data values | `value` (Float) |
+| `ReportTemplate` | Customer report templates | `name`, fields, reports |
+| `ReportResponseField` | Response field definitions | `label`, `key`, `type`, `options` |
+| `CustomerReport` | Uploaded Excel reports | `name`, `templateId`, `status`, `branchColumn` |
+| `CustomerRow` | Customer data rows | `branchId`, `rowIndex`, `customerData` |
+| `CustomerRowResponse` | Field responses per row | `fieldKey`, `value`, `updatedBy` |
 
 #### Enums
 
@@ -113,11 +118,25 @@ enum PeriodStatus {
   OPEN      // Accepting submissions
   LOCKED    // Period closed
 }
+
+enum ResponseFieldType {
+  DROPDOWN  // Select from predefined options
+  TEXT      // Free text input
+  NUMBER    // Numeric input
+  DATE      // Date picker
+  CHECKBOX  // Boolean checkbox
+}
+
+enum CustomerReportStatus {
+  OPEN      // Accepting responses
+  LOCKED    // Report closed
+}
 ```
 
 ### Key Relationships
 
 ```
+// Data submission flow
 Branch (1) ──< (N) User
 Branch (1) ──< (N) Entry
 Template (1) ──< (N) TemplateField
@@ -125,19 +144,36 @@ Template (1) ──< (N) Period
 Period (1) ──< (N) Entry
 Entry (1) ──< (N) EntryValue
 TemplateField (1) ──< (N) EntryValue
+
+// Customer report flow
+ReportTemplate (1) ──< (N) ReportResponseField
+ReportTemplate (1) ──< (N) CustomerReport
+CustomerReport (1) ──< (N) CustomerRow
+CustomerRow (1) ──< (N) CustomerRowResponse
+Branch (1) ──< (N) CustomerRow (optional)
 ```
 
 ### Indexes & Constraints
 
-- **Unique constraints**: `User.email`, `Branch.name`, `Entry(periodId, branchId)`, `EntryValue(entryId, templateFieldId)`
-- **Indexes**: All foreign keys, `Entry.status`, `Period.status`, `TemplateField(templateId, key)`
-- **Cascade delete**: `TemplateField`, `Entry`, `EntryValue` on parent deletion
+- **Unique constraints**: `User.email`, `Branch.name`, `Entry(periodId, branchId)`, `EntryValue(entryId, templateFieldId)`, `CustomerRow(reportId, rowIndex)`, `CustomerRowResponse(rowId, fieldKey)`
+- **Indexes**: All foreign keys, `Entry.status`, `Period.status`, `TemplateField(templateId, key)`, `CustomerReport.status`, `CustomerRow.branchId`
+- **Cascade delete**: `TemplateField`, `Entry`, `EntryValue`, `ReportResponseField`, `CustomerReport`, `CustomerRow`, `CustomerRowResponse` on parent deletion
 
 ### Dynamic Fields System
 
 - **TemplateField.key**: Unique identifier (A, B, C...) for formula references
 - **TemplateField.formula**: Computed fields like `"A / B"` or `"(A - B) / B"`
 - **Runtime evaluation**: Formulas computed during data export/display
+
+### Customer Report System
+
+- **ReportTemplate**: Defines response fields for customer data
+- **ResponseFieldType**: DROPDOWN, TEXT, NUMBER, DATE, CHECKBOX
+- **CustomerReport**: Uploaded Excel with branch column mapping
+- **CustomerRow**: Individual row with branch association (optional)
+- **CustomerRowResponse**: Per-row field responses
+- **Excel column mapping**: `branchColumn` identifies branch for each row
+- **Flexible data**: `customerData` JSON stores raw Excel data
 
 ### Seed Data
 
@@ -150,6 +186,7 @@ TemplateField (1) ──< (N) EntryValue
 1. **Submission Flow**: Branch users → data submission forms → DRAFT status → SUBMITTED → admin review
 2. **Approval Flow**: Admin → dashboard → review entries → approve/reject → LOCKED status
 3. **Export Flow**: Approved entries → formula evaluation → Excel/PDF generation → download
+4. **Customer Report Flow**: Admin upload Excel → parse rows → map branches → branch users fill responses → submit
 
 ## Next Steps
 

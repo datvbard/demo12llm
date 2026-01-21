@@ -105,6 +105,20 @@ lib/
 └── utils.ts             # cn() helper
 ```
 
+#### Types Directory
+
+```
+types/
+├── customer-report.ts   # Customer report TypeScript interfaces
+└── [feature].ts         # Feature-specific types
+```
+
+**Type Definition Standards:**
+- Mirror Prisma schema models
+- Include form input types
+- Add API response types
+- Export enums matching schema
+
 #### Components Directory
 
 ```

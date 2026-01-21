@@ -2,6 +2,35 @@
 
 ## [Unreleased]
 
+### Added - Phase 01: Customer Report Database Schema (2026-01-21)
+
+**Database Models**
+- ResponseFieldType enum (DROPDOWN, TEXT, NUMBER, DATE, CHECKBOX)
+- CustomerReportStatus enum (OPEN, LOCKED)
+- ReportTemplate model for customer report templates
+- ReportResponseField model for dynamic response field definitions
+- CustomerReport model for uploaded Excel reports
+- CustomerRow model for customer data with branch mapping
+- CustomerRowResponse model for per-row field responses
+- Branch model updated with rows relation
+
+**Database Features**
+- Branch-column mapping for Excel upload
+- Optional branch association per row
+- JSON storage for flexible customer data
+- Cascade delete fixes (CustomerReport.template, CustomerRow.branch)
+
+**TypeScript Types**
+- types/customer-report.ts with all interfaces
+- Form input types (CreateReportTemplateInput, CreateCustomerReportInput)
+- Excel parsing types (ExcelRowData, ParsedExcelResult)
+- Field option types for dropdown/checkbox
+
+**Schema Enhancements**
+- ReportResponseField.options as Json for flexible field config
+- CustomerRow.customerData as Json for raw Excel data
+- CustomerRowResponse.value as Json for type-flexible responses
+
 ### Added - Phase 02: Database Schema (2026-01-20)
 
 **Database Models**
