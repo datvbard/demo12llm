@@ -2,6 +2,35 @@
 
 ## [Unreleased]
 
+### Added - Phase 01: Critical Security Hardening (2026-01-21)
+
+**Security Implementations**
+- `lib/rate-limit.ts` - In-memory rate limiting utility
+- `middleware.ts` - Rate limiting middleware (100 req/min)
+- Error handling in `app/api/admin/entries/[id]/confirm/route.ts`
+- CSRF protection in `lib/auth.ts` (SameSite=lax cookies)
+- CSP headers in `next.config.ts` (Content-Security-Policy)
+
+**Security Headers Added**
+- Content-Security-Policy (default-src 'self', script-src 'self' 'unsafe-eval' 'unsafe-inline')
+- Strict-Transport-Security (max-age=63072000; includeSubDomains)
+- X-Frame-Options: SAMEORIGIN
+- X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+**Rate Limiting**
+- 100 requests per minute per IP
+- Automatic cleanup of expired entries
+- 429 response with Retry-After header
+- IP detection from x-forwarded-for/x-real-ip headers
+
+**Error Handling**
+- Try-catch blocks in API routes
+- Generic client error messages
+- Detailed server-side logging
+- Prisma error type detection
+
 ### Added - Phase 05: Customer Report Export Feature (2026-01-21)
 
 **Export Implementations**

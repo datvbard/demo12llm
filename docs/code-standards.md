@@ -195,6 +195,164 @@ npm run lint     # Run ESLint
 
 Ensures Prisma Client is generated after `npm install`.
 
+## Security Standards (Phase 04)
+
+### Rate Limiting
+
+**Implementation**: In-memory rate limiting via `middleware.ts` + `lib/rate-limit.ts`
+
+**Configuration**:
+```typescript
+// Default limits
+const DEFAULT_LIMIT = 100      // requests per window
+const DEFAULT_WINDOW_MS = 60000 // 1 minute
+```
+
+**Usage in middleware**:
+```typescript
+import { checkRateLimit } from '@/lib/rate-limit'
+
+const identifier = getClientIdentifier(req)
+const result = checkRateLimit(identifier, { limit: 100, windowMs: 60000 })
+if (!result.allowed) {
+  return NextResponse.json(
+    { error: 'Too many requests' },
+    { status: 429, headers: { 'Retry-After': String(result.retryAfter) } }
+  )
+}
+```
+
+### Error Handling Pattern
+
+**API Route Template**:
+```typescript
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/server-auth'
+
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const session = await requireAdmin()
+
+    // ... business logic
+
+    return NextResponse.json(data, { status: 200 })
+  } catch (error) {
+    console.error('[POST /api/route]', { error, id: params.id })
+
+    // Authentication errors
+    if (error instanceof Error && error.message === 'Not authenticated') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Prisma errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string; meta?: { target?: string[] } }
+
+      if (prismaError.code === 'P2025') {
+        return NextResponse.json({ error: 'Resource not found' }, { status: 404 })
+      }
+    }
+
+    // Generic server error
+    return NextResponse.json(
+      { error: 'Operation failed' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+**Key Principles**:
+- Wrap all route handlers in try-catch
+- Log errors server-side with context
+- Return generic messages to clients
+- Handle specific error types (auth, Prisma)
+
+### Content Security Policy (CSP)
+
+**Configuration** (`next.config.ts`):
+```typescript
+headers: async () => [{
+  source: '/:path*',
+  headers: [
+    {
+      key: 'Content-Security-Policy',
+      value: [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "font-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+        "upgrade-insecure-requests"
+      ].join('; ')
+    },
+    {
+      key: 'Strict-Transport-Security',
+      value: 'max-age=63072000; includeSubDomains'
+    },
+    {
+      key: 'X-Frame-Options',
+      value: 'SAMEORIGIN'
+    },
+    {
+      key: 'X-Content-Type-Options',
+      value: 'nosniff'
+    },
+    {
+      key: 'Referrer-Policy',
+      value: 'strict-origin-when-cross-origin'
+    },
+    {
+      key: 'Permissions-Policy',
+      value: 'geolocation=(), microphone=(), camera=()'
+    }
+  ]
+}]
+```
+
+### Cookie Security
+
+**NextAuth Configuration** (`lib/auth.ts`):
+```typescript
+cookies: {
+  sessionToken: {
+    name: 'next-auth.session-token',
+    options: {
+      httpOnly: true,           // Prevent XSS access
+      sameSite: 'lax',          // CSRF protection
+      secure: process.env.NODE_ENV === 'production', // HTTPS-only in prod
+      path: '/',                 // Available site-wide
+    }
+  }
+}
+```
+
+### Authentication Patterns
+
+**Admin-Only Routes**:
+```typescript
+import { requireAdmin } from '@/lib/server-auth'
+
+export async function GET(req: Request) {
+  const session = await requireAdmin() // Throws 401 if not admin
+  // ... admin logic
+}
+```
+
+**Branch-User Routes**:
+```typescript
+import { requireBranch } from '@/lib/server-auth'
+
+export async function POST(req: Request) {
+  const session = await requireBranch() // Throws 401 if not branch user
+  // ... branch logic, can access session.branchId
+}
+```
+
 ## API Route Standards (Phase 02)
 
 ### Route Organization

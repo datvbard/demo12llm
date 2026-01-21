@@ -31,7 +31,13 @@ branch-data-approval-system/
 │   └── ui/               # shadcn/ui components
 ├── lib/                  # Utility libraries
 │   ├── prisma.ts         # Prisma client singleton
-│   └── utils.ts          # cn() helper for Tailwind
+│   ├── utils.ts          # cn() helper for Tailwind
+│   ├── auth.ts           # NextAuth configuration
+│   ├── rate-limit.ts     # Rate limiting utility
+│   ├── server-auth.ts    # requireAdmin(), requireBranch()
+│   └── validations/      # Zod schemas
+├── middleware.ts         # Rate limiting middleware
+├── next.config.ts        # Next.js + CSP headers
 ├── prisma/              # Database schema
 │   └── schema.prisma    # Prisma schema
 ├── docs/                # Documentation
@@ -40,19 +46,44 @@ branch-data-approval-system/
 
 ## Key Architectural Patterns
 
-### 1. Singleton Prisma Client
+### 1. Security Layers
+
+**Rate Limiting** (`middleware.ts`, `lib/rate-limit.ts`):
+- In-memory rate limiting: 100 requests/minute per IP
+- IP detection from `x-forwarded-for` or `x-real-ip` headers
+- Automatic cleanup of expired entries
+- Returns 429 status with `Retry-After` header
+
+**CSRF Protection** (`lib/auth.ts`):
+- NextAuth cookies configured with `sameSite: 'lax'`
+- `httpOnly: true` prevents XSS access
+- `secure: true` in production for HTTPS-only
+
+**CSP Headers** (`next.config.ts`):
+- Content-Security-Policy restricts resource loading
+- Strict-Transport-Security (HSTS) with 2-year max-age
+- X-Frame-Options: SAMEORIGIN prevents clickjacking
+- X-Content-Type-Options: nosniff prevents MIME sniffing
+
+**Error Handling** (API routes):
+- Try-catch blocks prevent stack trace exposure
+- Generic client error messages
+- Detailed server-side logging for debugging
+- Prisma error type detection
+
+### 2. Singleton Prisma Client
 
 `lib/prisma.ts` exports a singleton PrismaClient instance to prevent multiple connections in development.
 
-### 2. Server Actions
+### 3. Server Actions
 
 Enabled in `next.config.ts` with `allowedOrigins` for localhost and Vercel deployments.
 
-### 3. Path Aliases
+### 4. Path Aliases
 
 `@/*` maps to project root for clean imports.
 
-### 4. CSS Variables
+### 5. CSS Variables
 
 shadcn/ui theme system using HSL color variables in `app/globals.css`.
 
@@ -60,7 +91,8 @@ shadcn/ui theme system using HSL color variables in `app/globals.css`.
 
 | File | Purpose |
 |------|---------|
-| `next.config.ts` | Next.js config + server actions |
+| `next.config.ts` | Next.js config + server actions + CSP headers |
+| `middleware.ts` | Rate limiting for all API routes |
 | `tsconfig.json` | TypeScript strict mode |
 | `tailwind.config.ts` | Tailwind + shadcn/ui theme |
 | `eslint.config.mjs` | ESLint flat config (Next.js + Prettier) |
