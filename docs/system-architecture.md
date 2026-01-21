@@ -46,7 +46,40 @@ branch-data-approval-system/
 
 ## Key Architectural Patterns
 
-### 1. Security Layers
+### 1. Error Handling & Type Safety (Phase 05)
+
+**Centralized Error Handler** (`lib/api-error-handler.ts`):
+- Standardized error codes across all API routes
+- Environment-aware responses (detailed in dev, generic in prod)
+- Prisma error type detection (P2025, P2002, P2003)
+- Type-safe error responses with `ApiErrorResponse` interface
+
+**Validation Utilities** (`lib/validation.ts`):
+- UUID v4 validation with Zod schemas
+- Email, username, password, and pagination validators
+- Helper functions: `validateUUID()`, `validateUUIDOrThrow()`
+
+**React Error Boundary** (`components/error-boundary.tsx`):
+- Catches runtime errors in React components
+- Vietnamese fallback UI with reload button
+- Optional custom error handlers
+- HOC wrapper: `withErrorBoundary(Component, fallback)`
+
+**Error Response Format**:
+```typescript
+{
+  error: string           // User-friendly message
+  code?: ApiErrorCode     // UNAUTHORIZED, FORBIDDEN, NOT_FOUND, VALIDATION_ERROR, CONFLICT, INTERNAL_ERROR
+  details?: unknown       // Development-only (stack traces)
+}
+```
+
+**Race Condition Prevention**:
+- Transaction-based updates in `app/api/entries/[entryId]/route.ts`
+- Atomic upsert with timestamp update
+- Prevents concurrent update conflicts
+
+### 2. Security Layers
 
 **Rate Limiting** (`middleware.ts`, `lib/rate-limit.ts`):
 - In-memory rate limiting: 100 requests/minute per IP
@@ -71,19 +104,19 @@ branch-data-approval-system/
 - Detailed server-side logging for debugging
 - Prisma error type detection
 
-### 2. Singleton Prisma Client
+### 3. Singleton Prisma Client
 
 `lib/prisma.ts` exports a singleton PrismaClient instance to prevent multiple connections in development.
 
-### 3. Server Actions
+### 4. Server Actions
 
 Enabled in `next.config.ts` with `allowedOrigins` for localhost and Vercel deployments.
 
-### 4. Path Aliases
+### 5. Path Aliases
 
 `@/*` maps to project root for clean imports.
 
-### 5. CSS Variables
+### 6. CSS Variables
 
 shadcn/ui theme system using HSL color variables in `app/globals.css`.
 

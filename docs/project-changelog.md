@@ -2,6 +2,44 @@
 
 ## [Unreleased]
 
+### Added - Phase 05: Error Handling & Type Safety (2026-01-21)
+
+**Error Handling System**
+- `lib/api-error-handler.ts` - Centralized API error handler with type safety
+- `lib/validation.ts` - Type-safe validation utilities (UUID, email, password, pagination)
+- `components/error-boundary.tsx` - React error boundary with Vietnamese fallback UI
+
+**Error Handler Features**
+- Standardized error codes: UNAUTHORIZED, FORBIDDEN, NOT_FOUND, VALIDATION_ERROR, CONFLICT, INTERNAL_ERROR
+- Environment-aware responses (detailed in dev, generic in prod)
+- Prisma error type detection (P2025, P2002, P2003)
+- Type-safe error responses with `ApiErrorResponse` interface
+- Helper functions: `handleApiError()`, `validationError()`, `notFoundError()`
+
+**Validation Utilities**
+- UUID v4 schema validator with `validateUUID()` and `validateUUIDOrThrow()`
+- Email, username, password, and pagination schemas
+- Zod-based validation with clear error messages
+
+**Race Condition Fix**
+- `app/api/entries/[entryId]/route.ts` - Transaction-based entry updates
+- Atomic upsert with timestamp update prevents concurrent conflicts
+
+**Type Safety Improvements**
+- Error typing fixes across 30 API routes
+- UUID validation in all parameterized routes
+- Consistent error response format
+- Proper TypeScript types for all error handlers
+
+**Error Response Format**:
+```typescript
+{
+  error: string           // User-friendly message
+  code?: ApiErrorCode     // Standardized error code
+  details?: unknown       // Development-only details (stack traces)
+}
+```
+
 ### Added - Phase 01: Critical Security Hardening (2026-01-21)
 
 **Security Implementations**

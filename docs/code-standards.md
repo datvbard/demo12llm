@@ -222,51 +222,52 @@ if (!result.allowed) {
 }
 ```
 
-### Error Handling Pattern
+### Error Handling Pattern (Phase 05)
 
 **API Route Template**:
 ```typescript
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/server-auth'
+import { handleApiError, validationError } from '@/lib/api-error-handler'
+import { validateUUID } from '@/lib/validation'
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await requireAdmin()
+    const { id } = params
+
+    // Validate UUID
+    if (!validateUUID(id)) {
+      return validationError('Invalid ID')
+    }
 
     // ... business logic
 
     return NextResponse.json(data, { status: 200 })
   } catch (error) {
-    console.error('[POST /api/route]', { error, id: params.id })
-
-    // Authentication errors
-    if (error instanceof Error && error.message === 'Not authenticated') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Prisma errors
-    if (error && typeof error === 'object' && 'code' in error) {
-      const prismaError = error as { code: string; meta?: { target?: string[] } }
-
-      if (prismaError.code === 'P2025') {
-        return NextResponse.json({ error: 'Resource not found' }, { status: 404 })
-      }
-    }
-
-    // Generic server error
-    return NextResponse.json(
-      { error: 'Operation failed' },
-      { status: 500 }
-    )
+    return handleApiError(error, 'POST /api/route', 'Operation failed')
   }
 }
 ```
 
+**Helper Functions**:
+```typescript
+// 400 Bad Request
+return validationError('Invalid input data')
+
+// 404 Not Found
+return notFoundError('Entry')
+
+// Centralized error handling
+return handleApiError(error, 'GET /api/entries', 'Failed to fetch entries')
+```
+
 **Key Principles**:
-- Wrap all route handlers in try-catch
-- Log errors server-side with context
-- Return generic messages to clients
-- Handle specific error types (auth, Prisma)
+- Use `handleApiError()` for all catch blocks
+- Validate UUIDs with `validateUUID()` before DB queries
+- Use helper functions for common error responses
+- Centralized error logging with context
+- Environment-aware responses (dev shows stack traces)
 
 ### Content Security Policy (CSP)
 
@@ -351,6 +352,47 @@ export async function POST(req: Request) {
   const session = await requireBranch() // Throws 401 if not branch user
   // ... branch logic, can access session.branchId
 }
+```
+
+### React Error Boundary (Phase 05)
+
+**Usage in Layouts**:
+```typescript
+import { ErrorBoundary } from '@/components/error-boundary'
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Custom error logging (e.g., send to Sentry)
+        console.error('[Layout Error]', error, errorInfo)
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  )
+}
+```
+
+**Custom Fallback**:
+```typescript
+<ErrorBoundary
+  fallback={
+    <div className="p-8 text-center">
+      <h2>Có lỗi xảy ra</h2>
+      <button onClick={() => window.location.reload()}>Thử lại</button>
+    </div>
+  }
+>
+  <PageComponent />
+</ErrorBoundary>
+```
+
+**HOC Wrapper**:
+```typescript
+import { withErrorBoundary } from '@/components/error-boundary'
+
+export default withErrorBoundary(MyComponent)
 ```
 
 ## API Route Standards (Phase 02)
