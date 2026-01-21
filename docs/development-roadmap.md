@@ -2,9 +2,9 @@
 
 ## Project: Branch Data Collection & Approval System
 
-**Status**: Phase 2 Complete
-**Last Updated**: 2026-01-20
-**Overall Progress**: 28% (2/7 phases)
+**Status**: Phase 02 Complete (Customer Report API)
+**Last Updated**: 2026-01-21
+**Overall Progress**: 43% (3/7 phases)
 
 ---
 
@@ -46,30 +46,28 @@
 
 ## Phase 03: API Routes & Server Actions 🚧 IN PROGRESS
 
-**Status**: Pending
-**Estimated**: 2-3 days
-
-**Scope**:
-- Server actions for CRUD operations
-- Entry submission workflow
-- Admin approval endpoints
-- Data export (Excel/PDF)
-- Validation with Zod
+**Status**: Partial Complete (Customer Report APIs done)
+**Completed**: 2026-01-21 (partial)
 
 **Deliverables**:
+- ✅ Customer report admin routes (templates, reports, export)
+- ✅ Customer report branch routes (view, update responses)
+- ✅ Excel parsing + branch mapping
+- ✅ Zod validation schemas
 - [ ] Entry server actions (create, update, submit)
 - [ ] Admin approval actions (approve, reject)
-- [ ] Template management endpoints
+- [ ] Template management endpoints (for period entries)
 - [ ] Period management (open, close)
-- [ ] Export functionality (Excel, PDF)
-- [ ] Input validation schemas
+- [ ] Export functionality for period entries
 - [ ] Error handling middleware
 
-**Success Criteria**:
-- All CRUD operations tested
-- Approval workflow functional
-- Export generates valid files
-- Validation catches invalid inputs
+**Success Metrics**:
+- ✅ Customer report CRUD functional
+- ✅ Excel upload + parsing working
+- ✅ Branch users can update responses
+- ⏳ Entry submission workflow pending
+- ⏳ Approval workflow pending
+- ⏳ Period entry export pending
 
 ---
 

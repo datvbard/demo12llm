@@ -102,7 +102,13 @@ app/
 ```
 lib/
 ├── prisma.ts            # Prisma singleton
-└── utils.ts             # cn() helper
+├── utils.ts             # cn() helper
+├── server-auth.ts       # requireAdmin(), requireBranch()
+├── validations/
+│   └── customer-report.ts  # Zod schemas
+├── excel-parser.ts      # Excel parsing with ExcelJS
+└── export/
+    └── excel.ts         # Excel export generation
 ```
 
 #### Types Directory
@@ -189,9 +195,155 @@ npm run lint     # Run ESLint
 
 Ensures Prisma Client is generated after `npm install`.
 
+## API Route Standards (Phase 02)
+
+### Route Organization
+
+```
+app/api/
+├── admin/
+│   ├── report-templates/
+│   │   ├── route.ts              # GET (list), POST (create)
+│   │   └── [id]/
+│   │       ├── route.ts          # GET, PATCH, DELETE
+│   │       └── fields/
+│   │           ├── route.ts      # GET (list), POST (create)
+│   │           ├── [fieldId]/route.ts  # PATCH, DELETE
+│   │           └── reorder/route.ts    # PATCH
+│   └── customer-reports/
+│       ├── route.ts              # GET (list), POST (upload)
+│       └── [id]/
+│           ├── route.ts          # GET, PATCH, DELETE
+│           └── export/
+│               ├── excel/route.ts
+│               └── pdf/route.ts
+└── customer-reports/
+    ├── route.ts                  # GET (list for branch)
+    └── [id]/
+        ├── route.ts              # GET (branch view)
+        └── rows/[rowId]/route.ts # PATCH (update responses)
+```
+
+### Authentication Helpers
+
+```typescript
+// lib/server-auth.ts
+export async function requireAdmin(): Promise<Session>
+export async function requireBranch(): Promise<Session>
+```
+
+Usage in route handlers:
+```typescript
+import { requireAdmin } from '@/lib/server-auth'
+
+export async function GET(req: Request) {
+  const session = await requireAdmin()
+  // ...admin logic
+}
+```
+
+### Validation Pattern
+
+```typescript
+import { createCustomerReportSchema } from '@/lib/validations/customer-report'
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const validatedData = createCustomerReportSchema.parse(body)
+    // ...use validatedData
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      )
+    }
+    // ...handle other errors
+  }
+}
+```
+
+### Error Response Format
+
+```typescript
+// Success
+return NextResponse.json(data, { status: 201 })
+
+// Validation error
+return NextResponse.json(
+  { error: 'Validation failed', details: error.errors },
+  { status: 400 }
+)
+
+// Not found
+return NextResponse.json(
+  { error: 'Resource not found' },
+  { status: 404 }
+)
+
+// Server error
+return NextResponse.json(
+  { error: error.message || 'Operation failed' },
+  { status: 500 }
+)
+```
+
+### Pagination Query Params
+
+```typescript
+const page = parseInt(searchParams.get('page') || '1')
+const limit = parseInt(searchParams.get('limit') || '20')
+const skip = (page - 1) * limit
+
+const [items, total] = await Promise.all([
+  prisma.model.findMany({ skip, take: limit }),
+  prisma.model.count()
+])
+
+return NextResponse.json({
+  items,
+  pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+})
+```
+
+### Excel Processing Pattern
+
+```typescript
+import { parseExcelFile, mapBranchNamesToIds, validateFileSize } from '@/lib/excel-parser'
+
+// 1. Validate file size
+const buffer = Buffer.from(await file.arrayBuffer())
+validateFileSize(buffer, 10) // 10MB max
+
+// 2. Parse Excel
+const parsedData = await parseExcelFile(buffer, branchColumn)
+
+// 3. Map branches
+const branchMap = await mapBranchNamesToIds(
+  parsedData.rows.map(r => r.branchName).filter(Boolean)
+)
+
+// 4. Check for unmapped branches
+const unmapped = Array.from(branchMap.entries())
+  .filter(([_, id]) => id === null)
+  .map(([name]) => name)
+
+if (unmapped.length > 0) {
+  return NextResponse.json(
+    { error: 'Branches not found', unmappedBranches: unmapped },
+    { status: 400 }
+  )
+}
+
+// 5. Create in transaction
+const result = await prisma.$transaction(async (tx) => {
+  // ...create report + rows
+})
+```
+
 ## Next Steps
 
-- Implement database schema in `prisma/schema.prisma`
-- Create API routes for data submission
 - Build UI components with shadcn/ui
 - Add authentication with NextAuth
+- Implement period entry submission workflow

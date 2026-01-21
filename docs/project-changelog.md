@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### Added - Phase 02: Customer Report API Routes (2026-01-21)
+
+**Admin API Routes**
+- `/api/admin/report-templates` - CRUD operations for report templates
+- `/api/admin/report-templates/[id]/fields` - Response field management
+- `/api/admin/report-templates/[id]/fields/[fieldId]` - Field update/delete
+- `/api/admin/report-templates/[id]/fields/reorder` - Batch field reordering
+- `/api/admin/customer-reports` - Excel upload, report CRUD, listing
+- `/api/admin/customer-reports/[id]/export/excel` - Excel export with responses
+- `/api/admin/customer-reports/[id]/export/pdf` - PDF export
+
+**Branch API Routes**
+- `/api/customer-reports` - List accessible reports
+- `/api/customer-reports/[id]` - Get report with branch-specific rows
+- `/api/customer-reports/[id]/rows/[rowId]` - Update row responses
+
+**Validation & Processing**
+- `lib/validations/customer-report.ts` - Zod schemas for all operations
+- `lib/excel-parser.ts` - Excel parsing with ExcelJS
+- Branch mapping: exact match (case-insensitive)
+- File validation: 10MB limit, `.xlsx`/`.xls` formats
+- Field key validation: lowercase + underscores, max 50 chars
+
+**Export Features**
+- Excel export combines original data + branch + responses
+- Checkbox formatted as `✓`/empty
+- Dropdown displays option labels
+
 ### Added - Phase 01: Customer Report Database Schema (2026-01-21)
 
 **Database Models**

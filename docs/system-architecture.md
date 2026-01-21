@@ -17,7 +17,7 @@ Built with Next.js 15, TypeScript, Prisma, PostgreSQL, and shadcn/ui.
 | Styling | Tailwind CSS + shadcn/ui | UI components |
 | State | TanStack Query 5 | Server state management |
 | Validation | Zod 3 | Schema validation |
-| Utils | bcrypt, exceljs, jspdf | Security, export, PDF |
+| Utils | bcrypt, exceljs, jspdf | Security, export, PDF, Excel parsing |
 
 ## Project Structure
 
@@ -188,9 +188,129 @@ Branch (1) ──< (N) CustomerRow (optional)
 3. **Export Flow**: Approved entries → formula evaluation → Excel/PDF generation → download
 4. **Customer Report Flow**: Admin upload Excel → parse rows → map branches → branch users fill responses → submit
 
+## API Routes
+
+### Customer Report API Routes (Phase 02)
+
+#### Admin Routes
+
+| Endpoint | Method | Purpose | Auth |
+|----------|--------|---------|------|
+| `/api/admin/report-templates` | GET | List templates (paginated, searchable) | Admin |
+| `/api/admin/report-templates` | POST | Create template | Admin |
+| `/api/admin/report-templates/[id]` | GET | Get template details | Admin |
+| `/api/admin/report-templates/[id]` | PATCH | Update template | Admin |
+| `/api/admin/report-templates/[id]` | DELETE | Delete template | Admin |
+| `/api/admin/report-templates/[id]/fields` | GET | List template fields | Admin |
+| `/api/admin/report-templates/[id]/fields` | POST | Create response field | Admin |
+| `/api/admin/report-templates/[id]/fields/[fieldId]` | PATCH | Update field | Admin |
+| `/api/admin/report-templates/[id]/fields/[fieldId]` | DELETE | Delete field | Admin |
+| `/api/admin/report-templates/[id]/fields/reorder` | PATCH | Reorder fields | Admin |
+| `/api/admin/customer-reports` | GET | List reports (paginated, filterable) | Admin |
+| `/api/admin/customer-reports` | POST | Upload Excel + create report | Admin |
+| `/api/admin/customer-reports/[id]` | GET | Get report details | Admin |
+| `/api/admin/customer-reports/[id]` | PATCH | Update report status | Admin |
+| `/api/admin/customer-reports/[id]` | DELETE | Delete report | Admin |
+| `/api/admin/customer-reports/[id]/export/excel` | GET | Export to Excel | Admin |
+| `/api/admin/customer-reports/[id]/export/pdf` | GET | Export to PDF | Admin |
+
+#### Branch Routes
+
+| Endpoint | Method | Purpose | Auth |
+|----------|--------|---------|------|
+| `/api/customer-reports` | GET | List accessible reports | Branch |
+| `/api/customer-reports/[id]` | GET | Get report with branch rows | Branch |
+| `/api/customer-reports/[id]/rows/[rowId]` | PATCH | Update row responses | Branch |
+
+### Request/Response Schemas
+
+#### ReportTemplate
+```typescript
+{
+  id: string
+  name: string
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+  fields: ReportResponseField[]
+}
+```
+
+#### ReportResponseField
+```typescript
+{
+  id: string
+  label: string
+  key: string  // lowercase letters, numbers, underscores
+  type: 'DROPDOWN' | 'TEXT' | 'NUMBER' | 'DATE' | 'CHECKBOX'
+  options?: string[]  // for DROPDOWN
+  required: boolean
+  order: number
+}
+```
+
+#### CustomerReport
+```typescript
+{
+  id: string
+  name: string
+  templateId: string
+  branchColumn: string  // Excel column name
+  columns: Array<{key, label, type}>
+  status: 'OPEN' | 'LOCKED'
+  uploadedBy: string
+  createdAt: Date
+}
+```
+
+#### CustomerRow
+```typescript
+{
+  id: string
+  reportId: string
+  branchId?: string
+  rowIndex: number
+  customerData: Record<string, any>
+  responses: CustomerRowResponse[]
+}
+```
+
+### Validation Rules
+
+**File Upload:**
+- Max size: 10MB
+- Formats: `.xlsx`, `.xls`
+- Required fields: `name`, `templateId`, `branchColumn`, `file`
+
+**Field Key:**
+- Must start with lowercase letter
+- Only lowercase letters, numbers, underscores
+- Max 50 characters
+
+**Response Updates:**
+- Only OPEN reports accept updates
+- Branch users can only update their assigned rows
+
+### Excel Processing Flow
+
+1. Parse Excel file → extract headers + rows
+2. Validate branch column exists
+3. Map branch names to IDs (exact match, case-insensitive)
+4. Return error if any branches unmapped
+5. Create report + rows in transaction
+6. Skip empty rows automatically
+
+### Export Features
+
+**Excel Export:**
+- Original customer data columns
+- Branch name column
+- Response field columns (formatted by type)
+- Checkbox: `✓` or empty
+- Dropdown: Label from options
+
 ## Next Steps
 
-- Phase 03: API routes and server actions
-- Phase 04: UI components with shadcn/ui
-- Phase 05: Authentication with NextAuth
-- Phase 06: Role-based access control
+- Phase 03: UI components with shadcn/ui
+- Phase 04: Authentication with NextAuth
+- Phase 05: Role-based access control
