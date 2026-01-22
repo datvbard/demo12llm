@@ -3,6 +3,7 @@ import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { createTemplateSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 
 export async function GET(req: Request) {
   try {
@@ -57,9 +58,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json(template, { status: 201 })
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
+        { error: 'Validation failed', details: error.errors },
         { status: 400 }
       )
     }
