@@ -118,7 +118,10 @@ export default function ReportTemplateDetailPage() {
   const handleSaveField = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const options = fieldType === 'DROPDOWN' ? fieldOptions.split(',').map(o => o.trim()).filter(Boolean) : null
+    // For dropdown: parse options, for others: undefined (not null, for Zod .optional())
+    const options = fieldType === 'DROPDOWN'
+      ? fieldOptions.split(',').map(o => o.trim()).filter(Boolean)
+      : undefined
 
     if (fieldType === 'DROPDOWN' && (!options || options.length === 0)) {
       setError('Dropdown field must have at least one option')
@@ -182,6 +185,11 @@ export default function ReportTemplateDetailPage() {
 
       if (!res.ok) {
         const data = await res.json()
+        // Show validation details if available
+        if (data.details && Array.isArray(data.details)) {
+          const details = data.details.map((d: any) => d.message || '').join(', ')
+          throw new Error(`${data.error}: ${details}`)
+        }
         throw new Error(data.error || 'Failed to save field')
       }
 

@@ -3,6 +3,7 @@ import { handleApiError } from '@/lib/api-error-handler'
 import { prisma } from '@/lib/prisma'
 import { updateFieldSchema } from '@/lib/validations/customer-report'
 import { NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 
 export async function PATCH(
   req: Request,
@@ -34,9 +35,9 @@ export async function PATCH(
 
     return NextResponse.json(updated)
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: (error as unknown as { errors: unknown }).errors },
+        { error: 'Validation failed', details: error.errors },
         { status: 400 }
       )
     }
