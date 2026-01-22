@@ -52,6 +52,18 @@ export default async function PeriodsPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Link
+                href="/periods"
+                className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+              >
+                Kỳ báo cáo
+              </Link>
+              <Link
+                href="/customer-reports"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Báo cáo KH
+              </Link>
+              <Link
                 href="/periods/profile"
                 className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
