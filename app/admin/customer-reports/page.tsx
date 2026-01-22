@@ -250,7 +250,7 @@ export default function CustomerReportsPage() {
                   Xem
                 </button>
                 <button
-                  onClick={() => router.push(`/admin/customer-reports/${report.id}/export/excel`)}
+                  onClick={() => window.open(`/api/admin/customer-reports/${report.id}/export/excel`, '_blank')}
                   className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Excel
