@@ -19,9 +19,13 @@ export async function GET(
           include: { fields: { orderBy: { order: 'asc' } } },
         },
         rows: {
-          include: { branch: { select: { name: true } } },
+          include: {
+            branch: { select: { id: true, name: true } },
+            responses: true,
+          },
           orderBy: { rowIndex: 'asc' },
         },
+        _count: { select: { rows: true } },
       },
     })
 
@@ -32,7 +36,10 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(report)
+    // Calculate completedRows (rows with at least one response)
+    const completedRows = report.rows.filter((row) => row.responses.length > 0).length
+
+    return NextResponse.json({ ...report, completedRows })
   } catch (error) {
     return handleApiError(error, 'GET /api/admin/customer-reports/[id]', 'Failed to get customer report')
   }
