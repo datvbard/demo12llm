@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     await requireAdmin()
 
-    const { email, username, password, branchId } = await req.json()
+    const { email, username, password, branchId, fullName, position } = await req.json()
 
     if (!email || !username || !password || !branchId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email already taken' }, { status: 400 })
     }
 
-    const user = await createUser({ email, username, password, branchId })
+    const user = await createUser({ email, username, password, branchId, fullName, position })
     return NextResponse.json(user, { status: 201 })
   } catch (error) {
     return handleApiError(error, 'POST /api/admin/users', 'Failed to create user')

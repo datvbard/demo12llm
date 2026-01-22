@@ -33,6 +33,8 @@ export interface CreateUserData {
   username: string
   password: string
   branchId?: string
+  fullName?: string
+  position?: string
 }
 
 export interface UpdatePasswordData {
@@ -72,6 +74,8 @@ export async function createUser(data: CreateUserData) {
       password: hashedPassword,
       role: Role.BRANCH,
       branchId: data.branchId,
+      fullName: data.fullName || null,
+      position: data.position || null,
     },
     include: { branch: true },
   })
