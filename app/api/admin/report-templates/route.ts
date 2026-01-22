@@ -56,7 +56,11 @@ export async function POST(req: Request) {
       include: { fields: true },
     })
 
-    return NextResponse.json(template, { status: 201 })
+    // Return with _count to match GET response format
+    return NextResponse.json({
+      ...template,
+      _count: { fields: template.fields.length, reports: 0 },
+    }, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
