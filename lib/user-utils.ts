@@ -139,6 +139,11 @@ export async function getBranches(params?: PaginationParams): Promise<PaginatedR
       orderBy: { name: 'asc' },
       skip,
       take: limit,
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
     }),
     prisma.branch.count(),
   ])
