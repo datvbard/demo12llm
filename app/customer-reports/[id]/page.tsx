@@ -122,6 +122,18 @@ export default function FillCustomerReportPage() {
     [saveRow]
   )
 
+  // Save immediately on blur (cancel debounce)
+  const handleBlur = useCallback(
+    (rowId: string) => {
+      if (timeoutRef.current[rowId]) {
+        clearTimeout(timeoutRef.current[rowId])
+        delete timeoutRef.current[rowId]
+      }
+      saveRow(rowId)
+    },
+    [saveRow]
+  )
+
   // Filter and search rows (memoized for performance)
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
@@ -284,6 +296,7 @@ export default function FillCustomerReportPage() {
                 fields={fields}
                 values={values[row.id] || {}}
                 onChange={(fieldKey, value) => handleChange(row.id, fieldKey, value)}
+                onBlur={() => handleBlur(row.id)}
                 saveStatus={saveStatuses[row.id] || 'idle'}
                 saveError={saveErrors[row.id]}
                 disabled={isLocked}

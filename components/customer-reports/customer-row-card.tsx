@@ -10,6 +10,7 @@ interface CustomerRowCardProps {
   fields: ReportResponseField[]
   values: Record<string, FieldValue | null>
   onChange: (fieldKey: string, value: FieldValue | null) => void
+  onBlur?: () => void
   saveStatus: SaveStatus
   saveError?: string
   disabled?: boolean
@@ -21,6 +22,7 @@ export function CustomerRowCard({
   fields,
   values,
   onChange,
+  onBlur,
   saveStatus,
   saveError,
   disabled,
@@ -60,6 +62,7 @@ export function CustomerRowCard({
               field={field}
               value={values[field.key]}
               onChange={(value) => onChange(field.key, value)}
+              onBlur={onBlur}
               disabled={disabled}
             />
           ))}

@@ -7,10 +7,11 @@ interface ResponseFieldInputProps {
   field: ReportResponseField
   value: FieldValue | null
   onChange: (value: FieldValue | null) => void
+  onBlur?: () => void
   disabled?: boolean
 }
 
-export function ResponseFieldInput({ field, value, onChange, disabled }: ResponseFieldInputProps) {
+export function ResponseFieldInput({ field, value, onChange, onBlur, disabled }: ResponseFieldInputProps) {
   const fieldId = `field-${field.id}`
   const baseInputClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed transition-colors"
 
@@ -22,6 +23,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
             id={fieldId}
             value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
+            onBlur={onBlur}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
@@ -43,6 +45,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
             type="text"
             value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
+            onBlur={onBlur}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
@@ -63,6 +66,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
               if (val !== null && isNaN(val)) return // Prevent NaN
               onChange(val)
             }}
+            onBlur={onBlur}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
@@ -78,6 +82,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
             type="date"
             value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
+            onBlur={onBlur}
             disabled={disabled}
             className={baseInputClasses}
             required={field.required}
@@ -93,6 +98,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
               type="checkbox"
               checked={Boolean(value)}
               onChange={(e) => onChange(e.target.checked)}
+              onBlur={onBlur}
               disabled={disabled}
               className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed"
               aria-label={field.label}
@@ -107,6 +113,7 @@ export function ResponseFieldInput({ field, value, onChange, disabled }: Respons
             type="text"
             value={String(value ?? '')}
             onChange={(e) => onChange(e.target.value || null)}
+            onBlur={onBlur}
             disabled={disabled}
             className={baseInputClasses}
             aria-label={field.label}
