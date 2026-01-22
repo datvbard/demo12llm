@@ -136,6 +136,9 @@ export async function POST(req: Request) {
           uploadedBy: (await requireAdmin()).id,
           status: 'OPEN',
         },
+        include: {
+          template: { select: { id: true, name: true } },
+        },
       })
 
       // Create rows
