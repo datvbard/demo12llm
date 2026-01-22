@@ -35,8 +35,24 @@ export async function GET(req: Request) {
       prisma.customerReport.count({ where }),
     ])
 
+    // Calculate completedRows for each report (rows with at least one response)
+    const reportsWithCompleted = await Promise.all(
+      reports.map(async (report) => {
+        const completedCount = await prisma.customerRow.count({
+          where: {
+            reportId: report.id,
+            responses: { some: {} },
+          },
+        })
+        return {
+          ...report,
+          completedRows: completedCount,
+        }
+      })
+    )
+
     return NextResponse.json({
-      reports,
+      reports: reportsWithCompleted,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     })
   } catch (error) {
@@ -136,7 +152,12 @@ export async function POST(req: Request) {
         )
       )
 
-      return { report, rowCount: rows.length }
+      // Return report with fields needed by frontend
+      return {
+        ...report,
+        _count: { rows: rows.length },
+        completedRows: 0,
+      }
     })
 
     return NextResponse.json(result, { status: 201 })
