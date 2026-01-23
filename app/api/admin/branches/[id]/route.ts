@@ -19,11 +19,24 @@ export async function DELETE(
 
     if (userCount > 0) {
       return NextResponse.json(
-        { error: `Cannot delete branch with ${userCount} users. Please reassign or delete users first.` },
+        { error: `Không thể xóa chi nhánh có ${userCount} người dùng. Vui lòng chuyển hoặc xóa người dùng trước.` },
         { status: 400 }
       )
     }
 
+    // Check if branch has entries
+    const entryCount = await prisma.entry.count({
+      where: { branchId: id },
+    })
+
+    if (entryCount > 0) {
+      return NextResponse.json(
+        { error: `Không thể xóa chi nhánh có ${entryCount} bài nộp. Vui lòng xóa bài nộp trước.` },
+        { status: 400 }
+      )
+    }
+
+    // Delete branch (CustomerRow will have branchId set to null via onDelete: SetNull)
     await prisma.branch.delete({
       where: { id },
     })
