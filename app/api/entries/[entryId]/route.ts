@@ -2,7 +2,7 @@ import { requireBranch } from '@/lib/server-auth'
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 import { handleApiError, validationError } from '@/lib/api-error-handler'
-import { validateUUID } from '@/lib/validation'
+import { validateID } from '@/lib/validation'
 
 export async function PATCH(
   req: Request,
@@ -13,11 +13,11 @@ export async function PATCH(
     const { entryId } = await params
     const { templateFieldId, value } = await req.json()
 
-    // Validate UUIDs
-    if (!validateUUID(entryId)) {
+    // Validate IDs
+    if (!validateID(entryId)) {
       return validationError('Invalid entry ID')
     }
-    if (!validateUUID(templateFieldId)) {
+    if (!validateID(templateFieldId)) {
       return validationError('Invalid template field ID')
     }
 

@@ -10,6 +10,17 @@ import { z } from 'zod'
 export const uuidSchema = z.string().uuid('Invalid UUID format')
 
 /**
+ * CUID schema validator (Prisma default ID format).
+ * CUID format: starts with 'c', followed by 24 alphanumeric chars.
+ */
+export const cuidSchema = z.string().regex(/^c[a-z0-9]{24}$/, 'Invalid CUID format')
+
+/**
+ * ID schema validator - accepts both UUID and CUID.
+ */
+export const idSchema = z.string().min(1, 'ID is required')
+
+/**
  * Validate UUID string.
  * Returns the UUID if valid, null otherwise.
  *
@@ -19,6 +30,18 @@ export const uuidSchema = z.string().uuid('Invalid UUID format')
 export function validateUUID(id: string): string | null {
   const result = uuidSchema.safeParse(id)
   return result.success ? result.data : null
+}
+
+/**
+ * Validate ID string (UUID or CUID).
+ * Returns the ID if valid, null otherwise.
+ */
+export function validateID(id: string): string | null {
+  if (!id || typeof id !== 'string') return null
+  // Accept CUID (starts with 'c', 25 chars) or UUID format
+  const isCuid = /^c[a-z0-9]{24}$/.test(id)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  return (isCuid || isUuid) ? id : null
 }
 
 /**
