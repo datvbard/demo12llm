@@ -3,7 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000", ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : [])],
+      allowedOrigins: [
+        "localhost:3000",
+        "localhost:3001",
+        "baocao.phongkhcn.vn",
+        ...(process.env.VERCEL_URL ? [process.env.VERCEL_URL] : []),
+      ],
     },
   },
   async headers() {
