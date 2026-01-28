@@ -62,7 +62,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin()
+    const admin = await requireAdmin()
 
     const formData = await req.formData()
     const name = formData.get('name') as string
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
             label: h,
             type: 'string' as const,
           })),
-          uploadedBy: (await requireAdmin()).id,
+          uploadedBy: admin.id,
           status: 'OPEN',
         },
         include: {
