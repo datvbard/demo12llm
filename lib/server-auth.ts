@@ -8,8 +8,11 @@ export async function getCurrentUser() {
 
 export async function requireAdmin() {
   const user = await getCurrentUser()
-  if (user?.role !== 'ADMIN') {
-    throw new Error('Unauthorized')
+  if (!user) {
+    throw new Error('Not authenticated')
+  }
+  if (user.role !== 'ADMIN') {
+    throw new Error('Forbidden')
   }
   return user
 }

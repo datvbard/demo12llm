@@ -122,6 +122,7 @@ export async function POST(req: Request) {
 
     // Create report with rows in transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Transaction with extended timeout for large Excel files
       // Create report
       const report = await tx.customerReport.create({
         data: {
@@ -141,24 +142,18 @@ export async function POST(req: Request) {
         },
       })
 
-      // Create rows
-      const rows = await Promise.all(
-        parsedData.rows.map((row) =>
-          tx.customerRow.create({
-            data: {
-              reportId: report.id,
-              branchId: branchMap.get(row.branchName || '') || null,
-              rowIndex: row.rowIndex,
-              customerData: row.data,
-            },
-          })
-        )
-      )
+      // Create rows in bulk for performance (avoids Vercel timeout)
+      const rowsData = parsedData.rows.map((row) => ({
+        reportId: report.id,
+        branchId: branchMap.get(row.branchName || '') || null,
+        rowIndex: row.rowIndex,
+        customerData: row.data,
+      }))
+      const { count } = await tx.customerRow.createMany({ data: rowsData })
 
-      // Return report with fields needed by frontend
       return {
         ...report,
-        _count: { rows: rows.length },
+        _count: { rows: count },
         completedRows: 0,
       }
     })
