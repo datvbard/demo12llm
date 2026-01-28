@@ -199,6 +199,20 @@ export default function CustomerReportDetailPage() {
     return Math.round((report.completedRows / report._count.rows) * 100)
   }
 
+  // Compute per-branch progress from rows data
+  const branchProgress = (() => {
+    const map = new Map<string, { name: string; total: number; completed: number }>()
+    for (const row of rows) {
+      const key = row.branchId || '_unassigned'
+      const name = row.branch?.name || 'Chưa phân'
+      if (!map.has(key)) map.set(key, { name, total: 0, completed: 0 })
+      const entry = map.get(key)!
+      entry.total++
+      if (row.responses.length > 0) entry.completed++
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name))
+  })()
+
   if (loading) {
     return <div className="p-8">Đang tải...</div>
   }
@@ -265,6 +279,35 @@ export default function CustomerReportDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Branch Progress */}
+        {branchProgress.length > 1 && (
+          <div className="mb-4 rounded-lg bg-white p-4 shadow">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Tiến độ theo chi nhánh</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {branchProgress.map((bp) => {
+                const pct = bp.total > 0 ? Math.round((bp.completed / bp.total) * 100) : 0
+                return (
+                  <div key={bp.name} className="rounded-md border border-gray-200 p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-900">{bp.name}</span>
+                      <span className={`text-xs font-medium ${pct === 100 ? 'text-green-600' : 'text-gray-500'}`}>
+                        {pct}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full ${pct === 100 ? 'bg-green-500' : pct > 0 ? 'bg-blue-500' : 'bg-gray-300'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{bp.completed}/{bp.total} khách hàng</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="mb-4 rounded-lg bg-white p-4 shadow">
