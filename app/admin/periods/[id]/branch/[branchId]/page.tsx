@@ -61,6 +61,23 @@ export default function BranchDetailPage() {
     router.push(`/admin/periods/${id}/branches`)
   }
 
+  async function handleUnlock() {
+    if (!entry) return
+    if (!confirm('Bạn có chắc muốn mở khóa báo cáo này? Chi nhánh sẽ có thể chỉnh sửa lại dữ liệu.')) {
+      return
+    }
+    const res = await fetch(`/api/admin/entries/${entry.id}/unlock`, {
+      method: 'POST',
+    })
+    if (res.ok) {
+      const { id } = params
+      router.push(`/admin/periods/${id}/branches`)
+    } else {
+      const data = await res.json()
+      alert(data.error || 'Không thể mở khóa')
+    }
+  }
+
   if (loading) {
     return <div className="p-8">Loading...</div>
   }
@@ -120,6 +137,20 @@ export default function BranchDetailPage() {
             >
               Confirm & Lock
             </button>
+          </div>
+        )}
+
+        {entry.status === 'LOCKED' && (
+          <div className="mt-6">
+            <button
+              onClick={handleUnlock}
+              className="rounded-md bg-orange-600 px-6 py-2 text-white font-medium hover:bg-orange-700"
+            >
+              Mở khóa
+            </button>
+            <p className="mt-2 text-sm text-gray-500">
+              Mở khóa để chi nhánh có thể chỉnh sửa và nộp lại báo cáo.
+            </p>
           </div>
         )}
 
