@@ -223,7 +223,18 @@ export default function CustomerReportDetailPage() {
         <div className="mb-6 rounded-lg bg-white p-6 shadow">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{report.name}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">{report.name}</h1>
+                <span
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                    report.status === 'OPEN'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {report.status === 'OPEN' ? '🟢 Đang mở' : '🔴 Đã khóa'}
+                </span>
+              </div>
               <p className="text-sm text-gray-500 mt-1">
                 {report._count.rows} khách hàng • {report.completedRows}/{report._count.rows} đã điền ({getCompletionPercentage()}%)
               </p>
@@ -237,7 +248,7 @@ export default function CustomerReportDetailPage() {
                     : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
-                {report.status === 'OPEN' ? 'Khóa' : 'Mở'}
+                {report.status === 'OPEN' ? '🔒 Khóa báo cáo' : '🔓 Mở khóa'}
               </button>
               <button
                 onClick={handleExportExcel}

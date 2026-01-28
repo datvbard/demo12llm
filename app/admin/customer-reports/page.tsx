@@ -263,7 +263,7 @@ export default function CustomerReportsPage() {
                       : 'bg-green-600 hover:bg-green-700'
                   }`}
                 >
-                  {report.status === 'OPEN' ? 'Khóa' : 'Mở'}
+                  {report.status === 'OPEN' ? '🔒 Khóa' : '🔓 Mở khóa'}
                 </button>
                 <button
                   onClick={() => handleDelete(report.id, report.name)}
